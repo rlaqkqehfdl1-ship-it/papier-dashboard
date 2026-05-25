@@ -586,7 +586,7 @@ async function saveCosts() {{
 }}
 
 // ── BOM (부품 목록) ───────────────────────────
-let bomSha=null, bomData=null, selBomProd=null, bomFilter='';
+let bomSha=null, bomData=null, curBomProd=null, bomFilter='';
 async function initBom() {{
   const {{sha,data}}=await ghGet('bom.json');
   bomSha=sha; bomData=data||{{updated_at:'',bom:{{}}}};
@@ -617,15 +617,15 @@ function renderBomList() {{
     const matched=bomFilter?parts.filter(p=>p['거래조']===bomFilter):parts;
     if(bomFilter&&!matched.length) return '';
     const sub=`<div class="sub">${{bomFilter?matched.length+'개 매칭':parts.length+'개 부품'}}</div>`;
-    return `<div class="li${{selBomProd===n&&!bomFilter?' active':''}}" data-idx="${{i}}" onclick="selBomProd(this.dataset.idx)"><div class="nm">${{n}}</div>${{sub}}</div>`;
+    return `<div class="li${{curBomProd===n&&!bomFilter?' active':''}}" data-idx="${{i}}" onclick="selBomProd(this.dataset.idx)"><div class="nm">${{n}}</div>${{sub}}</div>`;
   }}).join('');
 }}
 function selBomProd(idx) {{
-  const n=PRODS[idx]; selBomProd=n; bomFilter='';
+  const n=PRODS[idx]; curBomProd=n; bomFilter='';
   document.getElementById('bom-filter-sup').value='';
   renderBomList(); renderBomDetail(n);
 }}
-function renderBomDetail(n) {{
+function renderBomDetail(n) {{ curBomProd=n;
   const d=document.getElementById('bom-detail');
   const parts=bomData.bom[n]||[];
   d.innerHTML=`
@@ -708,7 +708,7 @@ function renderBomFilterView() {{
   d.innerHTML=html;
 }}
 async function saveBom() {{
-  if(!selBomProd) return;
+  if(!curBomProd) return;
   const rows=[], tb=document.getElementById('bom-tbody'); if(!tb) return;
   tb.querySelectorAll('tr').forEach(tr=>{{
     const ins=tr.querySelectorAll('input'); if(ins.length<8) return;
@@ -716,10 +716,10 @@ async function saveBom() {{
       '가격':parseFloat(ins[3].value)||0,'수량':parseFloat(ins[4].value)||0,
       'moq':parseFloat(ins[5].value)||0,'옵션':ins[6].value,'크기':ins[7].value}});
   }});
-  bomData.bom[selBomProd]=rows;
+  bomData.bom[curBomProd]=rows;
   bomData.updated_at=new Date().toISOString().slice(0,10);
   try {{
-    bomSha=await ghPut('bom.json',bomSha,bomData,'BOM 업데이트: '+selBomProd);
+    bomSha=await ghPut('bom.json',bomSha,bomData,'BOM 업데이트: '+curBomProd);
     document.getElementById('bom-st').textContent='저장 완료 '+bomData.updated_at;
     renderBomFilter(); renderBomList();
   }} catch(e) {{ alert('저장 실패: '+e.message); }}
