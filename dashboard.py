@@ -549,10 +549,10 @@ function renderCostDetail(n) {{
   const bomParts=(bomData&&bomData.bom&&bomData.bom[n])||[];
   c.materials=bomParts.map(p=>({{'name':p['부품명']||'','qty':p['수량']||1,'unit':'개','unit_price':p['가격']||0}}));
   const saved=c.items||[];
-  while(saved.length<10) saved.push({{'name':'','supplier':'','qty':0,'unit_price':0,'spec':''}});
-  const itemRows=saved.slice(0,10).map((it,i)=>`
+  while(saved.length<9) saved.push({{'name':'','supplier':'','qty':0,'unit_price':0,'spec':''}});
+  const editRows=saved.slice(0,9).map((it,i)=>`
     <tr>
-      <td style="width:18px;text-align:center;color:#ccc;font-size:10px;padding:2px 3px">${{i+1}}</td>
+      <td style="width:18px;text-align:center;color:#ccc;font-size:10px;padding:2px 3px">${{i+2}}</td>
       <td><input type="text" value="${{(it.name||'').replace(/"/g,'&quot;')}}" placeholder="항목명" oninput="updCS()"></td>
       <td><input type="text" value="${{(it.supplier||'').replace(/"/g,'&quot;')}}" placeholder="업체명" oninput="updCS()"></td>
       <td><input type="number" value="${{it.qty||0}}" min="0" step="0.01" style="width:52px" oninput="updCS()"></td>
@@ -560,6 +560,15 @@ function renderCostDetail(n) {{
       <td><input type="text" value="${{(it.spec||'').replace(/"/g,'&quot;')}}" placeholder="사양" oninput="updCS()"></td>
       <td class="isum" style="text-align:right;font-size:11px;color:#aaa;padding:2px 6px;white-space:nowrap">0원</td>
     </tr>`).join('');
+  const itemRows=`<tr id="bom-ref-row" style="background:#eef3ee;pointer-events:none;user-select:none">
+      <td style="width:18px;text-align:center;color:#bbb;font-size:10px;padding:2px 3px">1</td>
+      <td style="padding:2px 4px;font-size:12px;color:#4a7a4a;font-weight:600">순수자재비</td>
+      <td style="padding:2px 4px;font-size:11px;color:#888">BOM참고</td>
+      <td style="padding:2px 4px;font-size:11px;color:#888;text-align:center">1</td>
+      <td style="padding:2px 4px;font-size:11px;color:#bbb;text-align:right">-</td>
+      <td style="padding:2px 4px;font-size:11px;color:#888">BOM참고</td>
+      <td id="bom-sum-row" style="text-align:right;font-size:11px;font-weight:600;color:#4a7a4a;padding:2px 6px;white-space:nowrap">0원</td>
+    </tr>`+editRows;
   d.innerHTML=`
     <h3 style="font-size:15px;margin-bottom:12px">${{n}}</h3>
     <div class="fg"><label>재료비 <span style="font-size:10px;color:#bbb;font-weight:400">· BOM 탭에서 수정하세요</span></label>
@@ -639,8 +648,10 @@ function updCS() {{
     bomT+=Math.round((parseFloat(tr.dataset.qty)||0)*(parseFloat(tr.dataset.price)||0));
   }});
   const btEl=document.getElementById('bom-total'); if(btEl) btEl.textContent=bomT.toLocaleString()+'원';
+  const bsEl=document.getElementById('bom-sum-row'); if(bsEl) bsEl.textContent=bomT.toLocaleString()+'원';
   let itemT=0;
   document.querySelectorAll('#citems tr').forEach(tr=>{{
+    if(tr.id==='bom-ref-row') return;
     const ins=tr.querySelectorAll('input'); if(ins.length<4) return;
     const sub=Math.round((parseFloat(ins[2].value)||0)*(parseFloat(ins[3].value)||0));
     itemT+=sub;
@@ -678,6 +689,7 @@ async function saveCosts() {{
   }});
   const items=[];
   document.querySelectorAll('#citems tr').forEach(tr=>{{
+    if(tr.id==='bom-ref-row') return;
     const ins=tr.querySelectorAll('input'); if(ins.length<5) return;
     items.push({{name:ins[0].value,supplier:ins[1].value,
       qty:parseFloat(ins[2].value)||0,unit_price:parseFloat(ins[3].value)||0,spec:ins[4].value}});
