@@ -536,7 +536,7 @@ function renderCostList() {{
       const bomT=((bomData&&bomData.bom&&bomData.bom[n])||[]).reduce((s,p)=>s+(p['수량']||0)*(p['가격']||0),0);
       const itT=(c.items||[]).reduce((s,it)=>s+(it.qty||0)*(it.unit_price||0),0);
       const fee7=Math.round(p7*0.019), ship=c.shipping||0;
-      const cr=p7>0?Math.round((bomT+itT+ship+fee7)/p7*100):0;
+      const cr=p7>0?((bomT+itT+ship+fee7)/p7*100).toFixed(2):0;
       sub=`<div class="sub">소비자가 ${{cp.toLocaleString()}}원 · 원가율 ${{cr}}%</div>`;
     }}
     return `<div class="li${{selCost===n?' active':''}}" data-idx="${{i}}" onclick="selCostProd(this.dataset.idx)"><div class="nm">${{n}}</div>${{sub}}</div>`;
