@@ -218,7 +218,7 @@ canvas{{max-height:200px}}
 .chart-btn.active{{background:#111;color:#fff}}
 .chart-btn:hover:not(.active){{background:#ddd}}
 /* Calendar */
-.cal-wrap{{max-width:780px;margin:0 auto}}
+.cal-wrap{{width:100%}}
 .cal-header{{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}}
 .cal-header h2{{font-size:18px;font-weight:700;color:#111}}
 .cal-nav{{background:none;border:1px solid #e0e0e0;border-radius:7px;padding:5px 14px;cursor:pointer;font-size:16px;color:#555;font-family:inherit;transition:background .12s}}
@@ -455,7 +455,7 @@ canvas{{max-height:200px}}
 </div>
 
 <!-- 일정 -->
-    <div class="page" id="page-schedule">
+    <div class="page" id="page-schedule" style="padding-top:12px">
       <div class="cal-wrap">
         <div style="background:#fff;border-radius:10px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.07)">
           <div class="cal-header">
