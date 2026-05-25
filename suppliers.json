@@ -236,6 +236,16 @@
           "option": "화이트",
           "purchase_source": "동대문종합시장",
           "note": ""
+        },
+        {
+          "name": "기타 피크",
+          "spec": "",
+          "unit": "",
+          "unit_price": 1600,
+          "moq": 50,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
         }
       ]
     },
