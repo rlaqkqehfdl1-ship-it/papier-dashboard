@@ -1,9 +1,13 @@
-import requests, json, base64, os
+import requests, json, base64, os, hashlib
 from datetime import datetime, timedelta
 from collections import defaultdict
 
 GH_PAT      = os.environ.get("GH_PAT", "")
 GH_REPO     = os.environ.get("GH_REPO", "rlaqkqehfdl1-ship-it/papier-dashboard")
+DASH_USER   = os.environ.get("DASH_USER", "admin")
+DASH_PASS   = os.environ.get("DASH_PASS", "papier2024")
+user_hash   = hashlib.sha256(DASH_USER.encode()).hexdigest()
+pass_hash   = hashlib.sha256(DASH_PASS.encode()).hexdigest()
 
 CLIENT_ID     = "J2dzflmWekLd28v00yHuUK"
 CLIENT_SECRET = "eb6beJ7TAkbTemPZfEA5mi"
@@ -37,18 +41,12 @@ def get(path, **params):
     return requests.get(f"{BASE}{path}", headers=H(), params=params).json()
 
 def get_all_orders(start_date, end_date, embed=None):
-    """90일 단위로 나눠서 전체 주문 수집 (Cafe24 API 날짜 범위 제한 대응)"""
-    from datetime import datetime, timedelta
     all_orders = []
     cur = datetime.strptime(start_date, "%Y-%m-%d")
     end = datetime.strptime(end_date, "%Y-%m-%d")
     while cur <= end:
         chunk_end = min(cur + timedelta(days=89), end)
-        params = {
-            "start_date": cur.strftime("%Y-%m-%d"),
-            "end_date": chunk_end.strftime("%Y-%m-%d"),
-            "limit": 100,
-        }
+        params = {"start_date": cur.strftime("%Y-%m-%d"), "end_date": chunk_end.strftime("%Y-%m-%d"), "limit": 100}
         if embed:
             params["embed"] = embed
         offset = 0
@@ -65,291 +63,698 @@ def get_all_orders(start_date, end_date, embed=None):
 # ── 데이터 수집 ──────────────────────────────
 today       = datetime.now().strftime("%Y-%m-%d")
 month_start = datetime.now().strftime("%Y-%m-01")
-all_start   = "2026-04-17"  # 쇼핑몰 오픈일
+all_start   = "2026-04-17"
 
 print("데이터 수집 중...")
-orders_all    = get_all_orders(all_start, today, embed="items")
-orders_month  = [o for o in orders_all if o["order_date"][:7] == datetime.now().strftime("%Y-%m")]
-orders_today  = [o for o in orders_all if o["order_date"][:10] == today]
-products      = get("/products", limit=100).get("products", [])
+orders_all   = get_all_orders(all_start, today, embed="items")
+orders_month = [o for o in orders_all if o["order_date"][:7] == datetime.now().strftime("%Y-%m")]
+orders_today = [o for o in orders_all if o["order_date"][:10] == today]
+products     = get("/products", limit=100).get("products", [])
+
+real_products       = [p for p in products if float(p.get("price", "0")) > 0]
+product_names_json  = json.dumps([p["product_name"] for p in real_products], ensure_ascii=False)
+product_prices_json = json.dumps({p["product_name"]: int(float(p.get("price", "0"))) for p in real_products}, ensure_ascii=False)
 
 # ── 집계 ─────────────────────────────────────
-total_month  = sum(float(o["actual_order_amount"]["order_price_amount"]) for o in orders_month)
-total_today  = sum(float(o["actual_order_amount"]["order_price_amount"]) for o in orders_today)
-total_all    = sum(float(o["actual_order_amount"]["order_price_amount"]) for o in orders_all)
-order_count  = len(orders_month)
+total_month     = sum(float(o["actual_order_amount"]["order_price_amount"]) for o in orders_month)
+total_today     = sum(float(o["actual_order_amount"]["order_price_amount"]) for o in orders_today)
+total_all       = sum(float(o["actual_order_amount"]["order_price_amount"]) for o in orders_all)
+order_count     = len(orders_month)
 order_count_all = len(orders_all)
 
 status_count = defaultdict(int)
 for o in orders_month:
-    status_count[SHIP_STATUS.get(o.get("shipping_status",""), o.get("shipping_status","기타"))] += 1
+    status_count[SHIP_STATUS.get(o.get("shipping_status", ""), o.get("shipping_status", "기타"))] += 1
 
 product_sales = defaultdict(int)
 for o in orders_month:
     for item in o.get("items", []):
         product_sales[item["product_name"]] += int(item.get("quantity", 0))
 
-bestsellers = sorted(product_sales.items(), key=lambda x: -x[1])[:10]
-
-daily_sales = defaultdict(float)
+bestsellers  = sorted(product_sales.items(), key=lambda x: -x[1])[:10]
+daily_sales  = defaultdict(float)
 for o in orders_month:
-    day = o["order_date"][:10]
-    daily_sales[day] += float(o["actual_order_amount"]["order_price_amount"])
+    daily_sales[o["order_date"][:10]] += float(o["actual_order_amount"]["order_price_amount"])
 daily_sorted = sorted(daily_sales.items())
 
-# 상품별 판매 수량 (오픈일 이후 누적)
 sold_by_name = defaultdict(int)
 for o in orders_all:
     for item in o.get("items", []):
         sold_by_name[item["product_name"]] += int(item.get("quantity", 0))
 
-low_stock = []  # JS가 stock.json 기반으로 동적 계산
-
-# ── HTML 생성 ─────────────────────────────────
-now_str   = datetime.now().strftime("%Y년 %m월 %d일 %H:%M 기준") + " · 매일 오전 10시 자동 갱신"
-sold_json = json.dumps(dict(sold_by_name), ensure_ascii=False)
-chart_labels = json.dumps([d[0][5:] for d in daily_sorted])
-chart_data   = json.dumps([d[1] for d in daily_sorted])
-
+# ── HTML 변수 준비 ────────────────────────────
+now_str       = datetime.now().strftime("%Y년 %m월 %d일 %H:%M 기준") + " · 매일 오전 10시 자동 갱신"
+sold_json     = json.dumps(dict(sold_by_name), ensure_ascii=False)
+chart_labels  = json.dumps([d[0][5:] for d in daily_sorted])
+chart_data    = json.dumps([d[1] for d in daily_sorted])
 status_labels = json.dumps(list(status_count.keys()))
 status_vals   = json.dumps(list(status_count.values()))
+best_labels   = json.dumps([b[0] for b in bestsellers])
+best_vals     = json.dumps([b[1] for b in bestsellers])
+status_rows   = "".join(f'<div class="stat-chip"><span>{k}</span><strong>{v}건</strong></div>' for k, v in status_count.items())
+best_rows     = "".join(f'<li><span class="rank">{i+1}</span><span class="pname">{b[0]}</span><span class="qty">{b[1]}개</span></li>' for i, b in enumerate(bestsellers))
 
-best_labels = json.dumps([b[0] for b in bestsellers])
-best_vals   = json.dumps([b[1] for b in bestsellers])
-
-
-status_rows = "".join(f'<div class="stat-chip"><span>{k}</span><strong>{v}건</strong></div>' for k,v in status_count.items())
-best_rows   = "".join(f'<li><span class="rank">{i+1}</span><span class="pname">{b[0]}</span><span class="qty">{b[1]}개</span></li>' for i,b in enumerate(bestsellers))
-
+# ── HTML ─────────────────────────────────────
 html = f"""<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>papier archive 대시보드</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>papier archive</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
-  *{{box-sizing:border-box;margin:0;padding:0}}
-  body{{font-family:'Apple SD Gothic Neo',sans-serif;background:#f5f5f5;color:#222}}
-  header{{background:#111;color:#fff;padding:20px 32px;display:flex;justify-content:space-between;align-items:center}}
-  header h1{{font-size:20px;font-weight:300;letter-spacing:4px}}
-  header span{{font-size:12px;opacity:.6}}
-  .container{{max-width:1200px;margin:0 auto;padding:24px}}
-  .kpi-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}}
-  .kpi{{background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.08)}}
-  .kpi .label{{font-size:12px;color:#888;margin-bottom:8px}}
-  .kpi .value{{font-size:28px;font-weight:700;color:#111}}
-  .kpi .sub{{font-size:12px;color:#aaa;margin-top:4px}}
-  .grid2{{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px}}
-  .grid2b{{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px}}
-  .card{{background:#fff;border-radius:12px;padding:24px;box-shadow:0 1px 4px rgba(0,0,0,.08)}}
-  .card h2{{font-size:14px;font-weight:600;color:#444;margin-bottom:20px;letter-spacing:1px}}
-  .stat-chips{{display:flex;flex-wrap:wrap;gap:10px}}
-  .stat-chip{{background:#f8f8f8;border-radius:8px;padding:10px 16px;display:flex;flex-direction:column;gap:4px}}
-  .stat-chip span{{font-size:11px;color:#888}}
-  .stat-chip strong{{font-size:18px;font-weight:700}}
-  ol.best-list{{list-style:none;padding:0}}
-  ol.best-list li{{display:flex;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0;gap:12px}}
-  .rank{{font-size:12px;font-weight:700;color:#bbb;width:20px;text-align:center}}
-  li:nth-child(1) .rank{{color:#f0c040}}
-  li:nth-child(2) .rank{{color:#aaa}}
-  li:nth-child(3) .rank{{color:#c87533}}
-  .pname{{flex:1;font-size:13px}}
-  .qty{{font-size:13px;font-weight:600;color:#555}}
-  table{{width:100%;border-collapse:collapse;font-size:13px}}
-  th{{text-align:left;padding:10px;border-bottom:2px solid #eee;color:#888;font-weight:500}}
-  td{{padding:10px;border-bottom:1px solid #f5f5f5}}
-  .badge{{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:600}}
-  .badge-danger{{background:#fff0f0;color:#e53}}
-  .badge-ok{{background:#f0fff4;color:#2a7}}
-  .badge-out{{background:#f0f0f0;color:#999}}
-  .product-name-cell{{font-weight:600;padding-top:14px}}
-  .opt-cell{{color:#666;font-size:12px}}
-  .qty-input{{width:64px;border:1px solid #ddd;border-radius:6px;padding:3px 8px;font-size:13px;text-align:right}}
-  .qty-input:focus{{outline:none;border-color:#111}}
-  .save-btn{{background:#111;color:#fff;border:none;border-radius:8px;padding:10px 24px;font-size:13px;cursor:pointer;margin-top:16px}}
-  .save-btn:hover{{background:#333}}
-  .save-btn:disabled{{background:#aaa;cursor:default}}
-  .stock-status{{font-size:12px;color:#aaa;margin-top:8px}}
-  canvas{{max-height:220px}}
+*{{box-sizing:border-box;margin:0;padding:0}}
+body{{font-family:'Apple SD Gothic Neo',sans-serif;background:#f5f5f5;color:#222;font-size:14px}}
+/* Login */
+.login-wrap{{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#111}}
+.login-card{{background:#fff;border-radius:16px;padding:48px;width:340px;box-shadow:0 8px 32px rgba(0,0,0,.4)}}
+.login-card h1{{font-size:20px;font-weight:300;letter-spacing:4px;text-align:center;margin-bottom:6px}}
+.login-card p{{font-size:11px;color:#aaa;text-align:center;margin-bottom:32px}}
+.lf{{margin-bottom:14px}}
+.lf label{{font-size:11px;color:#888;display:block;margin-bottom:5px}}
+.lf input{{width:100%;border:1px solid #ddd;border-radius:8px;padding:10px 12px;font-size:13px;outline:none;font-family:inherit}}
+.lf input:focus{{border-color:#111}}
+.login-btn{{width:100%;background:#111;color:#fff;border:none;border-radius:8px;padding:12px;font-size:13px;cursor:pointer;margin-top:6px;font-family:inherit}}
+.login-btn:hover{{background:#333}}
+.login-err{{font-size:12px;color:#e53;text-align:center;margin-top:10px;min-height:16px}}
+/* App */
+#app{{display:none}}
+.app{{display:flex;min-height:100vh}}
+.sidebar{{width:176px;background:#111;color:#fff;flex-shrink:0;display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh}}
+.sidebar .logo{{padding:22px 18px 14px;font-size:13px;letter-spacing:3px;font-weight:300;border-bottom:1px solid #1e1e1e}}
+.sidebar .logo span{{font-size:10px;color:#555;display:block;margin-top:3px;letter-spacing:1px}}
+.sidebar nav{{flex:1;padding:12px 0}}
+.sidebar nav a{{display:flex;align-items:center;gap:10px;padding:11px 18px;font-size:12px;color:#888;cursor:pointer;border-left:3px solid transparent;transition:all .15s}}
+.sidebar nav a:hover{{color:#fff;background:rgba(255,255,255,.04)}}
+.sidebar nav a.active{{color:#fff;border-left-color:#fff;background:rgba(255,255,255,.07)}}
+.sidebar nav a .ic{{width:18px;text-align:center;font-size:14px}}
+.sidebar .logout{{padding:16px 18px;border-top:1px solid #1e1e1e}}
+.sidebar .logout button{{width:100%;background:transparent;color:#555;border:1px solid #2a2a2a;border-radius:6px;padding:7px;font-size:11px;cursor:pointer;font-family:inherit}}
+.sidebar .logout button:hover{{color:#fff;border-color:#555}}
+.main{{flex:1;margin-left:176px;background:#f5f5f5;min-height:100vh}}
+.topbar{{background:#fff;border-bottom:1px solid #eee;padding:12px 28px;font-size:11px;color:#aaa}}
+.page{{display:none;padding:24px 28px}}
+.page.active{{display:block}}
+/* KPI */
+.kpi-grid{{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:20px}}
+.kpi{{background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.07)}}
+.kpi .lbl{{font-size:11px;color:#999;margin-bottom:7px}}
+.kpi .val{{font-size:24px;font-weight:700;color:#111}}
+.kpi .sub{{font-size:11px;color:#bbb;margin-top:3px}}
+/* Cards */
+.grid2{{display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:20px}}
+.grid2b{{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}}
+.card{{background:#fff;border-radius:10px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,.07)}}
+.card h3{{font-size:13px;font-weight:600;color:#555;margin-bottom:16px;letter-spacing:.5px}}
+.stat-chips{{display:flex;flex-wrap:wrap;gap:8px}}
+.stat-chip{{background:#f8f8f8;border-radius:7px;padding:8px 14px;display:flex;flex-direction:column;gap:3px}}
+.stat-chip span{{font-size:10px;color:#aaa}}
+.stat-chip strong{{font-size:16px;font-weight:700}}
+ol.blist{{list-style:none}}
+ol.blist li{{display:flex;align-items:center;padding:9px 0;border-bottom:1px solid #f5f5f5;gap:10px}}
+.rank{{font-size:11px;font-weight:700;color:#ccc;width:18px;text-align:center}}
+li:nth-child(1) .rank{{color:#f0c040}}
+li:nth-child(2) .rank{{color:#aaa}}
+li:nth-child(3) .rank{{color:#c87533}}
+.pname{{flex:1;font-size:12px}}
+.qty{{font-size:12px;font-weight:600;color:#666}}
+canvas{{max-height:200px}}
+/* Split layout */
+.split{{display:grid;grid-template-columns:260px 1fr;gap:14px;min-height:calc(100vh - 160px)}}
+.list-panel{{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;display:flex;flex-direction:column}}
+.panel-head{{padding:14px 18px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}}
+.panel-head h3{{font-size:12px;font-weight:600;color:#555}}
+.list-scroll{{overflow-y:auto;flex:1}}
+.li{{padding:12px 18px;border-bottom:1px solid #f8f8f8;cursor:pointer;transition:background .12s}}
+.li:hover{{background:#fafafa}}
+.li.active{{background:#f2f2f2;font-weight:600}}
+.li .nm{{font-size:13px;color:#222}}
+.li .sub{{font-size:11px;color:#bbb;margin-top:2px}}
+.detail{{background:#fff;border-radius:10px;padding:22px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow-y:auto}}
+.detail-empty{{display:flex;align-items:center;justify-content:center;color:#ccc;font-size:13px;min-height:300px}}
+/* Forms */
+.fg{{margin-bottom:16px}}
+.fg label{{font-size:11px;color:#888;display:block;margin-bottom:5px;font-weight:500}}
+.fg input,.fg textarea,.fg select{{width:100%;border:1px solid #e0e0e0;border-radius:7px;padding:8px 10px;font-size:13px;outline:none;font-family:inherit}}
+.fg input:focus,.fg textarea:focus{{border-color:#111}}
+.fg textarea{{resize:vertical;min-height:72px}}
+.frow{{display:grid;gap:12px}}
+.frow.c2{{grid-template-columns:1fr 1fr}}
+.frow.c3{{grid-template-columns:1fr 1fr 1fr}}
+/* Dyn table */
+.dtbl{{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:6px}}
+.dtbl th{{font-size:11px;color:#bbb;font-weight:500;padding:5px 6px;border-bottom:1px solid #eee;text-align:left;white-space:nowrap}}
+.dtbl td{{padding:3px 3px;vertical-align:middle}}
+.dtbl td input{{border:1px solid #e0e0e0;border-radius:5px;padding:4px 7px;font-size:12px;width:100%;outline:none;font-family:inherit}}
+.dtbl td input:focus{{border-color:#111}}
+.del-btn{{background:none;border:none;color:#ccc;cursor:pointer;font-size:16px;line-height:1;padding:0 4px}}
+.del-btn:hover{{color:#e53}}
+.add-btn{{width:100%;background:none;border:1px dashed #ddd;border-radius:6px;padding:6px;font-size:12px;color:#aaa;cursor:pointer;font-family:inherit}}
+.add-btn:hover{{border-color:#888;color:#555}}
+/* Buttons */
+.btn{{border:none;border-radius:7px;padding:9px 18px;font-size:12px;cursor:pointer;font-family:inherit}}
+.btn-p{{background:#111;color:#fff}}
+.btn-p:hover{{background:#333}}
+.btn-p:disabled{{background:#bbb;cursor:default}}
+.btn-d{{background:#fff0f0;color:#e53;border:1px solid #fcc}}
+.btn-d:hover{{background:#ffe0e0}}
+.btn-g{{background:#f5f5f5;color:#555;border:1px solid #e8e8e8}}
+.btn-g:hover{{background:#eee}}
+.btn-row{{display:flex;gap:8px;margin-top:18px;align-items:center}}
+.save-st{{font-size:11px;color:#aaa}}
+/* Stock */
+.qtbl{{width:100%;border-collapse:collapse;font-size:12px}}
+.qtbl th{{text-align:left;padding:8px 10px;border-bottom:2px solid #eee;color:#aaa;font-weight:500}}
+.qtbl td{{padding:8px 10px;border-bottom:1px solid #f5f5f5;vertical-align:middle}}
+.qty-inp{{width:66px;border:1px solid #ddd;border-radius:5px;padding:3px 7px;font-size:12px;text-align:right;outline:none}}
+.qty-inp:focus{{border-color:#111}}
+/* Cost summary */
+.csum{{background:#f8f8f8;border-radius:8px;padding:14px;margin-top:12px}}
+.csum .cr{{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:#666}}
+.csum .cr.tot{{border-top:1px solid #e0e0e0;margin-top:8px;padding-top:10px;font-weight:700;font-size:14px;color:#111}}
+.csum .cr.mgn{{font-size:13px;font-weight:600;color:#2a7}}
+.csum .cr.mgn.neg{{color:#e53}}
 </style>
 </head>
 <body>
-<header>
-  <h1>papier archive</h1>
-  <span>{now_str}</span>
-</header>
-<div class="container">
 
-  <div class="kpi-grid">
-    <div class="kpi"><div class="label">누적 총 매출</div><div class="value">{int(total_all):,}원</div><div class="sub">전체 기간 · {order_count_all}건</div></div>
-    <div class="kpi"><div class="label">이번달 총 매출</div><div class="value">{int(total_month):,}원</div><div class="sub">{month_start} ~ {today} · {order_count}건</div></div>
-    <div class="kpi"><div class="label">오늘 매출</div><div class="value">{int(total_today):,}원</div><div class="sub">{today}</div></div>
-    <div class="kpi"><div class="label">재고 부족 상품</div><div class="value" id="low-stock-kpi" style="color:#aaa">-</div><div class="sub">5개 이하 기준</div></div>
+<!-- LOGIN -->
+<div id="login-screen" class="login-wrap">
+  <div class="login-card">
+    <h1>papier archive</h1>
+    <p>관리자 페이지</p>
+    <div class="lf"><label>아이디</label>
+      <input type="text" id="lu" placeholder="아이디" onkeydown="if(event.key==='Enter')login()">
+    </div>
+    <div class="lf"><label>비밀번호</label>
+      <input type="password" id="lp" placeholder="비밀번호" onkeydown="if(event.key==='Enter')login()">
+    </div>
+    <button class="login-btn" onclick="login()">로그인</button>
+    <div class="login-err" id="lerr"></div>
   </div>
-
-  <div class="grid2">
-    <div class="card">
-      <h2>일별 매출 추이</h2>
-      <canvas id="salesChart"></canvas>
-    </div>
-    <div class="card">
-      <h2>주문 처리 현황</h2>
-      <div class="stat-chips">{status_rows}</div>
-      <br>
-      <canvas id="statusChart"></canvas>
-    </div>
-  </div>
-
-  <div class="grid2b">
-    <div class="card">
-      <h2>베스트셀러</h2>
-      <ol class="best-list">{best_rows}</ol>
-    </div>
-    <div class="card">
-      <h2>재고 관리</h2>
-      <table id="stock-table" style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead><tr>
-          <th style="text-align:left;padding:10px;border-bottom:2px solid #eee;color:#888;font-weight:500">상품명</th>
-          <th style="text-align:left;padding:10px;border-bottom:2px solid #eee;color:#888;font-weight:500">옵션</th>
-          <th style="text-align:left;padding:10px;border-bottom:2px solid #eee;color:#888;font-weight:500">기초재고</th>
-          <th style="text-align:left;padding:10px;border-bottom:2px solid #eee;color:#888;font-weight:500">판매수량</th>
-          <th style="text-align:left;padding:10px;border-bottom:2px solid #eee;color:#888;font-weight:500">잔여재고</th>
-        </tr></thead>
-        <tbody id="stock-tbody"><tr><td colspan="4" style="padding:20px;color:#aaa;text-align:center">불러오는 중...</td></tr></tbody>
-      </table>
-      <button class="save-btn" id="save-btn" onclick="saveStock()">저장</button>
-      <div class="stock-status" id="stock-status"></div>
-    </div>
-  </div>
-
 </div>
+
+<!-- APP -->
+<div id="app">
+<div class="app">
+  <div class="sidebar">
+    <div class="logo">papier archive<span>ADMIN</span></div>
+    <nav>
+      <a id="nav-main"      class="active" onclick="showPage('main')">     <span class="ic">📊</span>대시보드</a>
+      <a id="nav-costs"                    onclick="showPage('costs')">    <span class="ic">🧮</span>원가 계산</a>
+      <a id="nav-recipes"                  onclick="showPage('recipes')">  <span class="ic">📖</span>레시피 북</a>
+      <a id="nav-suppliers"                onclick="showPage('suppliers')"><span class="ic">🏢</span>거래 업체</a>
+    </nav>
+    <div class="logout"><button onclick="logout()">로그아웃</button></div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">{now_str}</div>
+
+    <!-- 대시보드 -->
+    <div class="page active" id="page-main">
+      <div class="kpi-grid">
+        <div class="kpi"><div class="lbl">누적 총 매출</div><div class="val">{int(total_all):,}원</div><div class="sub">전체 기간 · {order_count_all}건</div></div>
+        <div class="kpi"><div class="lbl">이번달 총 매출</div><div class="val">{int(total_month):,}원</div><div class="sub">{month_start} ~ {today} · {order_count}건</div></div>
+        <div class="kpi"><div class="lbl">오늘 매출</div><div class="val">{int(total_today):,}원</div><div class="sub">{today}</div></div>
+        <div class="kpi"><div class="lbl">재고 부족 상품</div><div class="val" id="low-kpi" style="color:#bbb">-</div><div class="sub">잔여 5개 이하</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card"><h3>일별 매출 추이</h3><canvas id="salesChart"></canvas></div>
+        <div class="card"><h3>주문 처리 현황</h3><div class="stat-chips">{status_rows}</div><br><canvas id="statusChart"></canvas></div>
+      </div>
+      <div class="grid2b">
+        <div class="card"><h3>베스트셀러 (이번달)</h3><ol class="blist">{best_rows}</ol></div>
+        <div class="card">
+          <h3>재고 관리</h3>
+          <table class="qtbl"><thead><tr><th>상품명</th><th>옵션</th><th>기초재고</th><th>판매수량</th><th>잔여재고</th></tr></thead>
+            <tbody id="stock-tbody"><tr><td colspan="5" style="padding:16px;color:#ccc;text-align:center">불러오는 중...</td></tr></tbody>
+          </table>
+          <div class="btn-row">
+            <button class="btn btn-p" id="save-btn" onclick="saveStock()">저장</button>
+            <span class="save-st" id="stock-st"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 원가 계산 -->
+    <div class="page" id="page-costs">
+      <div class="split">
+        <div class="list-panel">
+          <div class="panel-head"><h3>상품 목록</h3></div>
+          <div class="list-scroll" id="costs-list"></div>
+        </div>
+        <div class="detail" id="costs-detail"><div class="detail-empty">상품을 선택하세요</div></div>
+      </div>
+    </div>
+
+    <!-- 레시피 북 -->
+    <div class="page" id="page-recipes">
+      <div class="split">
+        <div class="list-panel">
+          <div class="panel-head"><h3>상품 목록</h3></div>
+          <div class="list-scroll" id="recipes-list"></div>
+        </div>
+        <div class="detail" id="recipes-detail"><div class="detail-empty">상품을 선택하세요</div></div>
+      </div>
+    </div>
+
+    <!-- 거래 업체 -->
+    <div class="page" id="page-suppliers">
+      <div class="split">
+        <div class="list-panel">
+          <div class="panel-head">
+            <h3>거래 업체</h3>
+            <button class="btn btn-g" style="padding:5px 10px;font-size:11px" onclick="addSupplier()">+ 추가</button>
+          </div>
+          <div class="list-scroll" id="sup-list"></div>
+        </div>
+        <div class="detail" id="sup-detail"><div class="detail-empty">업체를 선택하거나 추가하세요</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div>
+
 <script>
-new Chart(document.getElementById('salesChart'), {{
-  type: 'bar',
-  data: {{ labels: {chart_labels}, datasets: [{{ label: '매출(원)', data: {chart_data},
-    backgroundColor: 'rgba(17,17,17,0.12)', borderColor: '#111', borderWidth: 1.5, borderRadius: 4 }}] }},
-  options: {{ plugins: {{ legend: {{ display: false }} }}, scales: {{ y: {{ ticks: {{ callback: v => v.toLocaleString()+'원' }} }} }} }}
+// ── Auth ─────────────────────────────────────
+const UH = '{user_hash}', PH = '{pass_hash}';
+async function sha256(s) {{
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(s));
+  return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
+}}
+async function login() {{
+  const u=document.getElementById('lu').value.trim(), p=document.getElementById('lp').value;
+  const [uh,ph] = await Promise.all([sha256(u),sha256(p)]);
+  if(uh===UH&&ph===PH) {{
+    sessionStorage.setItem('auth','1');
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    initApp();
+  }} else {{ document.getElementById('lerr').textContent='아이디 또는 비밀번호가 틀렸습니다.'; }}
+}}
+function logout() {{ sessionStorage.removeItem('auth'); location.reload(); }}
+window.addEventListener('DOMContentLoaded', ()=>{{
+  if(sessionStorage.getItem('auth')==='1') {{
+    document.getElementById('login-screen').style.display='none';
+    document.getElementById('app').style.display='block';
+    initApp();
+  }}
 }});
-// ── 재고 관리 ─────────────────────────────────
-const GH_OWNER = 'rlaqkqehfdl1-ship-it';
-const GH_REPO_  = 'papier-dashboard';
-const SOLD      = {sold_json};   // 판매수량 (빌드 시점 기준)
-let stockSha = null, stockData = null;
 
-function getGHToken() {{
-  let tok = localStorage.getItem('gh_token');
-  if (!tok) {{
-    tok = prompt('GitHub Personal Access Token을 입력하세요:\\n(처음 한 번만 입력하면 저장됩니다)');
-    if (tok) localStorage.setItem('gh_token', tok.trim());
-  }}
-  return tok ? tok.trim() : null;
+// ── Navigation ───────────────────────────────
+function showPage(n) {{
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sidebar nav a').forEach(a=>a.classList.remove('active'));
+  document.getElementById('page-'+n).classList.add('active');
+  document.getElementById('nav-'+n).classList.add('active');
 }}
 
+// ── GitHub API ───────────────────────────────
+const GH_OWNER='rlaqkqehfdl1-ship-it', GH_REPO_='papier-dashboard';
+function getToken() {{
+  let t=localStorage.getItem('gh_token');
+  if(!t) {{ t=prompt('GitHub Personal Access Token (처음 한 번만 입력)'); if(t) localStorage.setItem('gh_token',t.trim()); }}
+  return t?t.trim():null;
+}}
+async function ghGet(f) {{
+  const r=await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/contents/${{f}}`);
+  if(!r.ok) return {{sha:null,data:null}};
+  const m=await r.json();
+  const bin=atob(m.content.replace(/\\n/g,''));
+  const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
+  return {{sha:m.sha, data:JSON.parse(new TextDecoder('utf-8').decode(bytes))}};
+}}
+async function ghPut(f,sha,data,msg) {{
+  const tok=getToken(); if(!tok) throw new Error('토큰 없음');
+  const text=JSON.stringify(data,null,2);
+  const eb=new TextEncoder().encode(text);
+  let bin=''; eb.forEach(b=>bin+=String.fromCharCode(b));
+  const body={{message:msg,content:btoa(bin)}}; if(sha) body.sha=sha;
+  const r=await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/contents/${{f}}`,{{
+    method:'PUT', headers:{{'Authorization':`Bearer ${{tok}}`,'Content-Type':'application/json','Accept':'application/vnd.github+json'}},
+    body:JSON.stringify(body)
+  }});
+  if(!r.ok) throw new Error((await r.json()).message);
+  return (await r.json()).content.sha;
+}}
+
+// ── Init ─────────────────────────────────────
+function initApp() {{
+  initCharts(); loadStock(); initCosts(); initRecipes(); initSuppliers();
+}}
+
+// ── 재고 ─────────────────────────────────────
+const SOLD={sold_json};
+let stockSha=null, stockData=null;
 async function loadStock() {{
-  try {{
-    const r = await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/contents/stock.json`);
-    const meta = await r.json();
-    stockSha = meta.sha;
-    const binary = atob(meta.content.replace(/\\n/g, ''));
-    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
-    stockData = JSON.parse(new TextDecoder('utf-8').decode(bytes));
-    renderStock();
-  }} catch(e) {{
-    document.getElementById('stock-tbody').innerHTML =
-      '<tr><td colspan="5" style="padding:20px;color:#aaa;text-align:center">재고 데이터를 불러올 수 없습니다</td></tr>';
-  }}
+  const {{sha,data}}=await ghGet('stock.json');
+  if(!data) return;
+  stockSha=sha; stockData=data; renderStock();
 }}
-
-function remColor(rem) {{
-  return rem <= 0 ? '#e53' : rem <= 5 ? '#e96' : '#2a7';
-}}
-
+function rc(r){{ return r<=0?'#e53':r<=5?'#e96':'#2a7'; }}
 function renderStock() {{
-  const tbody = document.getElementById('stock-tbody');
-  let html = '', prev = null, lowCount = 0;
-  stockData.products.forEach((p, pi) => {{
-    const sold = SOLD[p.product_name] || 0;
-    p.variants.forEach((v, vi) => {{
-      const base = v.base_qty ?? v.qty ?? 0;
-      const rem  = base - sold;
-      if (rem <= 5) lowCount++;
-      const showName = prev !== p.product_name;
-      prev = p.product_name;
-      html += `<tr>
-        ${{showName
-          ? `<td style="padding:10px;border-bottom:1px solid #f5f5f5;font-weight:600">${{p.product_name}}</td>`
-          : '<td style="padding:10px;border-bottom:1px solid #f5f5f5"></td>'}}
-        <td style="padding:10px;border-bottom:1px solid #f5f5f5;color:#666;font-size:12px">${{v.option}}</td>
-        <td style="padding:10px;border-bottom:1px solid #f5f5f5">
-          <input class="qty-input" type="number" min="0" value="${{base}}"
-            data-pi="${{pi}}" data-vi="${{vi}}" data-sold="${{sold}}" onchange="onBaseChange(this)">
-        </td>
-        <td style="padding:10px;border-bottom:1px solid #f5f5f5;color:#888">${{sold}}개</td>
-        <td id="rem-${{pi}}-${{vi}}" style="padding:10px;border-bottom:1px solid #f5f5f5;font-weight:700;color:${{remColor(rem)}}">${{rem}}개</td>
+  if(!stockData) return;
+  let html='', prev=null, low=0;
+  stockData.products.forEach((p,pi)=>{{
+    const sold=SOLD[p.product_name]||0;
+    p.variants.forEach((v,vi)=>{{
+      const base=v.base_qty??v.qty??0, rem=base-sold;
+      if(rem<=5) low++;
+      const sn=prev!==p.product_name; prev=p.product_name;
+      html+=`<tr>
+        ${{sn?`<td style="padding:8px 10px;border-bottom:1px solid #f5f5f5;font-weight:600;font-size:12px">${{p.product_name}}</td>`:'<td style="padding:8px 10px;border-bottom:1px solid #f5f5f5"></td>'}}
+        <td style="padding:8px 10px;border-bottom:1px solid #f5f5f5;color:#888;font-size:11px">${{v.option}}</td>
+        <td style="padding:8px 10px;border-bottom:1px solid #f5f5f5"><input class="qty-inp" type="number" min="0" value="${{base}}" data-pi="${{pi}}" data-vi="${{vi}}" data-s="${{sold}}" onchange="onBC(this)"></td>
+        <td style="padding:8px 10px;border-bottom:1px solid #f5f5f5;color:#aaa;font-size:12px">${{sold}}개</td>
+        <td id="r-${{pi}}-${{vi}}" style="padding:8px 10px;border-bottom:1px solid #f5f5f5;font-weight:700;color:${{rc(rem)}};font-size:12px">${{rem}}개</td>
       </tr>`;
     }});
   }});
-  tbody.innerHTML = html;
-  const kpi = document.getElementById('low-stock-kpi');
-  if (kpi) {{ kpi.textContent = lowCount + '개'; kpi.style.color = lowCount > 0 ? '#e53' : '#2a7'; }}
-  document.getElementById('stock-status').textContent =
-    `마지막 저장: ${{stockData.updated_at || '미설정'}} · 판매수량은 매일 오전 10시 갱신`;
+  document.getElementById('stock-tbody').innerHTML=html;
+  const k=document.getElementById('low-kpi');
+  if(k){{ k.textContent=low+'개'; k.style.color=low>0?'#e53':'#2a7'; }}
+  document.getElementById('stock-st').textContent=`저장: ${{stockData.updated_at||'-'}} · 판매수량 매일 10시 갱신`;
 }}
-
-function onBaseChange(input) {{
-  const base = parseInt(input.value) || 0;
-  const sold = parseInt(input.dataset.sold) || 0;
-  const rem  = base - sold;
-  const pi = input.dataset.pi, vi = input.dataset.vi;
-  const el = document.getElementById(`rem-${{pi}}-${{vi}}`);
-  el.textContent = rem + '개';
-  el.style.color = remColor(rem);
+function onBC(inp) {{
+  const base=parseInt(inp.value)||0,sold=parseInt(inp.dataset.s)||0,rem=base-sold;
+  const el=document.getElementById(`r-${{inp.dataset.pi}}-${{inp.dataset.vi}}`);
+  el.textContent=rem+'개'; el.style.color=rc(rem);
 }}
-
 async function saveStock() {{
-  const token = getGHToken();
-  if (!token) {{ alert('토큰이 없으면 저장할 수 없습니다.'); return; }}
-  document.querySelectorAll('.qty-input').forEach(inp => {{
-    const p = stockData.products[inp.dataset.pi];
-    const v = p.variants[inp.dataset.vi];
-    v.base_qty = parseInt(inp.value) || 0;
-    delete v.qty;
+  document.querySelectorAll('.qty-inp').forEach(inp=>{{
+    const p=stockData.products[inp.dataset.pi],v=p.variants[inp.dataset.vi];
+    v.base_qty=parseInt(inp.value)||0; delete v.qty;
   }});
-  stockData.updated_at = new Date().toISOString().slice(0, 10);
-  const text = JSON.stringify(stockData, null, 2);
-  const encBytes = new TextEncoder().encode(text);
-  let bin = ''; encBytes.forEach(b => bin += String.fromCharCode(b));
-  const content = btoa(bin);
-  const btn = document.getElementById('save-btn');
-  btn.disabled = true; btn.textContent = '저장 중...';
-  const r = await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/contents/stock.json`, {{
-    method: 'PUT',
-    headers: {{ 'Authorization': `Bearer ${{token}}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github+json' }},
-    body: JSON.stringify({{ message: `재고 기초 업데이트 ${{stockData.updated_at}}`, content, sha: stockSha }})
-  }});
-  btn.disabled = false; btn.textContent = '저장';
-  if (r.ok) {{
-    const res = await r.json();
-    stockSha = res.content.sha;
-    document.getElementById('stock-status').textContent =
-      `마지막 저장: ${{stockData.updated_at}} · 판매수량은 매일 오전 10시 갱신`;
-    alert('저장 완료!');
-  }} else {{
-    const err = await r.json();
-    alert(`저장 실패: ${{err.message}}`);
-  }}
+  stockData.updated_at=new Date().toISOString().slice(0,10);
+  const btn=document.getElementById('save-btn');
+  btn.disabled=true; btn.textContent='저장 중...';
+  try {{
+    stockSha=await ghPut('stock.json',stockSha,stockData,`재고 업데이트 ${{stockData.updated_at}}`);
+    document.getElementById('stock-st').textContent=`저장: ${{stockData.updated_at}}`;
+  }} catch(e) {{ alert('저장 실패: '+e.message); }}
+  btn.disabled=false; btn.textContent='저장';
 }}
 
-loadStock();
+// ── 원가 계산 ─────────────────────────────────
+const PRODS={product_names_json};
+const PRICES={product_prices_json};
+let costSha=null, costData=null, selCost=null;
+async function initCosts() {{
+  const {{sha,data}}=await ghGet('costs.json');
+  costSha=sha; costData=data||{{updated_at:'',products:{{}}}};
+  renderCostList();
+}}
+function renderCostList() {{
+  document.getElementById('costs-list').innerHTML=PRODS.map(n=>{{
+    const c=costData.products[n];
+    let sub='';
+    if(c) {{
+      const mc=(c.materials||[]).reduce((s,m)=>s+(m.qty||0)*(m.unit_price||0),0);
+      const tot=Math.round(mc+(c.labor||0)+(c.packaging||0)+(c.other||0));
+      const pr=PRICES[n]||0, mg=pr>0?Math.round((pr-tot)/pr*100):0;
+      sub=`<div class="sub">원가 ${{tot.toLocaleString()}}원 · 마진 ${{mg}}%</div>`;
+    }}
+    return `<div class="li${{selCost===n?' active':''}}" onclick="selCostProd('${{n.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}}')">\
+<div class="nm">${{n}}</div>${{sub}}</div>`;
+  }}).join('');
+}}
+function selCostProd(n) {{ selCost=n; renderCostList(); renderCostDetail(n); }}
+function renderCostDetail(n) {{
+  const d=document.getElementById('costs-detail');
+  const c=costData.products[n]||{{materials:[],labor:0,packaging:0,other:0}};
+  const pr=PRICES[n]||0;
+  d.innerHTML=`
+    <h3 style="font-size:15px;margin-bottom:18px">${{n}}</h3>
+    <div class="frow c2" style="margin-bottom:14px">
+      <div class="fg"><label>판매가 (카페24)</label>
+        <input type="text" value="${{pr.toLocaleString()}}원" disabled style="background:#f8f8f8;color:#999">
+      </div><div></div>
+    </div>
+    <div class="fg"><label>재료비</label>
+      <table class="dtbl"><thead><tr><th>재료명</th><th style="width:60px">수량</th><th style="width:50px">단위</th><th style="width:90px">단가(원)</th><th style="width:80px">합계</th><th></th></tr></thead>
+        <tbody id="cmat"></tbody>
+      </table>
+      <button class="add-btn" onclick="addCMat()">+ 재료 추가</button>
+    </div>
+    <div class="frow c3" style="margin-bottom:12px">
+      <div class="fg"><label>인건비 (원/개)</label><input type="number" id="c-lab" value="${{c.labor||0}}" min="0" onchange="updCS()"></div>
+      <div class="fg"><label>포장재비 (원)</label><input type="number" id="c-pkg" value="${{c.packaging||0}}" min="0" onchange="updCS()"></div>
+      <div class="fg"><label>기타 비용 (원)</label><input type="number" id="c-oth" value="${{c.other||0}}" min="0" onchange="updCS()"></div>
+    </div>
+    <div class="csum" id="csum"></div>
+    <div class="btn-row">
+      <button class="btn btn-p" onclick="saveCosts()">저장</button>
+      <span class="save-st" id="cost-st"></span>
+    </div>`;
+  (c.materials||[]).forEach(m=>addCMatRow(m));
+  updCS();
+}}
+function addCMat() {{ addCMatRow({{name:'',qty:1,unit:'개',unit_price:0}}); updCS(); }}
+function addCMatRow(m) {{
+  const tb=document.getElementById('cmat'); if(!tb) return;
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><input type="text" value="${{(m.name||'').replace(/"/g,'&quot;')}}" placeholder="재료명" onchange="updCS()"></td>
+    <td><input type="number" value="${{m.qty||1}}" min="0" step="0.01" onchange="updCS()"></td>
+    <td><input type="text" value="${{(m.unit||'개').replace(/"/g,'&quot;')}}" onchange="updCS()"></td>
+    <td><input type="number" value="${{m.unit_price||0}}" min="0" onchange="updCS()"></td>
+    <td class="csub" style="font-size:11px;color:#aaa;padding:0 6px;white-space:nowrap">${{Math.round((m.qty||1)*(m.unit_price||0)).toLocaleString()}}원</td>
+    <td><button class="del-btn" onclick="this.closest('tr').remove();updCS()">×</button></td>`;
+  tb.appendChild(tr);
+}}
+function updCS() {{
+  const tb=document.getElementById('cmat'); if(!tb) return;
+  let mt=0;
+  tb.querySelectorAll('tr').forEach(tr=>{{
+    const ins=tr.querySelectorAll('input'); if(ins.length<4) return;
+    const sub=Math.round((parseFloat(ins[1].value)||0)*(parseFloat(ins[3].value)||0));
+    mt+=sub;
+    const el=tr.querySelector('.csub'); if(el) el.textContent=sub.toLocaleString()+'원';
+  }});
+  const lab=parseFloat(document.getElementById('c-lab')?.value)||0;
+  const pkg=parseFloat(document.getElementById('c-pkg')?.value)||0;
+  const oth=parseFloat(document.getElementById('c-oth')?.value)||0;
+  const tot=Math.round(mt+lab+pkg+oth);
+  const pr=selCost?(PRICES[selCost]||0):0;
+  const mg=pr>0?Math.round((pr-tot)/pr*100):0, ma=pr-tot, neg=mg<0;
+  const el=document.getElementById('csum'); if(!el) return;
+  el.innerHTML=`
+    <div class="cr"><span>재료비 합계</span><span>${{Math.round(mt).toLocaleString()}}원</span></div>
+    <div class="cr"><span>인건비</span><span>${{Math.round(lab).toLocaleString()}}원</span></div>
+    <div class="cr"><span>포장재비</span><span>${{Math.round(pkg).toLocaleString()}}원</span></div>
+    <div class="cr"><span>기타</span><span>${{Math.round(oth).toLocaleString()}}원</span></div>
+    <div class="cr tot"><span>총 원가</span><span>${{tot.toLocaleString()}}원</span></div>
+    <div class="cr mgn${{neg?' neg':''}}"><span>마진 (${{mg}}%)</span><span>${{ma.toLocaleString()}}원</span></div>`;
+}}
+async function saveCosts() {{
+  if(!selCost) return;
+  const tb=document.getElementById('cmat'), mats=[];
+  tb.querySelectorAll('tr').forEach(tr=>{{
+    const ins=tr.querySelectorAll('input'); if(ins.length<4) return;
+    mats.push({{name:ins[0].value,qty:parseFloat(ins[1].value)||0,unit:ins[2].value,unit_price:parseFloat(ins[3].value)||0}});
+  }});
+  costData.products[selCost]={{materials:mats,labor:parseFloat(document.getElementById('c-lab').value)||0,
+    packaging:parseFloat(document.getElementById('c-pkg').value)||0,other:parseFloat(document.getElementById('c-oth').value)||0}};
+  costData.updated_at=new Date().toISOString().slice(0,10);
+  try {{
+    costSha=await ghPut('costs.json',costSha,costData,'원가 업데이트: '+selCost);
+    document.getElementById('cost-st').textContent='저장 완료 '+costData.updated_at;
+    renderCostList();
+  }} catch(e) {{ alert('저장 실패: '+e.message); }}
+}}
 
-// ── 차트 ──────────────────────────────────────
-new Chart(document.getElementById('statusChart'), {{
-  type: 'doughnut',
-  data: {{ labels: {status_labels}, datasets: [{{ data: {status_vals},
-    backgroundColor: ['#111','#555','#888','#bbb','#ddd','#eee'] }}] }},
-  options: {{ plugins: {{ legend: {{ position: 'bottom', labels: {{ font: {{ size: 11 }} }} }} }} }}
-}});
+// ── 레시피 북 ─────────────────────────────────
+let recSha=null, recData=null, selRec=null;
+async function initRecipes() {{
+  const {{sha,data}}=await ghGet('recipes.json');
+  recSha=sha; recData=data||{{updated_at:'',recipes:{{}}}};
+  renderRecList();
+}}
+function renderRecList() {{
+  document.getElementById('recipes-list').innerHTML=PRODS.map(n=>{{
+    const r=recData.recipes[n];
+    const sub=r?`<div class="sub">단계 ${{(r.steps||[]).length}}개 · ${{r.updated_at||''}}</div>`:'';
+    return `<div class="li${{selRec===n?' active':''}}" onclick="selRecProd('${{n.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}}')">\
+<div class="nm">${{n}}</div>${{sub}}</div>`;
+  }}).join('');
+}}
+function selRecProd(n) {{ selRec=n; renderRecList(); renderRecDetail(n); }}
+function renderRecDetail(n) {{
+  const d=document.getElementById('recipes-detail');
+  const r=recData.recipes[n]||{{description:'',ingredients:[],steps:[],notes:''}};
+  d.innerHTML=`
+    <h3 style="font-size:15px;margin-bottom:18px">${{n}}</h3>
+    <div class="fg"><label>제품 설명</label><textarea id="r-desc" rows="3">${{(r.description||'').replace(/</g,'&lt;')}}</textarea></div>
+    <div class="fg"><label>재료 목록</label>
+      <table class="dtbl"><thead><tr><th>재료명</th><th>수량/규격</th><th>메모</th><th></th></tr></thead>
+        <tbody id="ring"></tbody>
+      </table>
+      <button class="add-btn" onclick="addRIng()">+ 재료 추가</button>
+    </div>
+    <div class="fg" style="margin-top:16px"><label>제조 단계</label>
+      <div id="rsteps"></div>
+      <button class="add-btn" style="margin-top:6px" onclick="addRStep()">+ 단계 추가</button>
+    </div>
+    <div class="fg" style="margin-top:16px"><label>메모</label>
+      <textarea id="r-note" rows="2">${{(r.notes||'').replace(/</g,'&lt;')}}</textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-p" onclick="saveRecipe()">저장</button>
+      <span class="save-st" id="rec-st"></span>
+    </div>`;
+  (r.ingredients||[]).forEach(ing=>addRIngRow(ing));
+  (r.steps||[]).forEach(s=>addRStepRow(s));
+}}
+function addRIng() {{ addRIngRow({{name:'',spec:'',note:''}}); }}
+function addRIngRow(ing) {{
+  const tb=document.getElementById('ring'); if(!tb) return;
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td><input type="text" value="${{(ing.name||'').replace(/"/g,'&quot;')}}" placeholder="재료명"></td>
+    <td><input type="text" value="${{(ing.spec||'').replace(/"/g,'&quot;')}}" placeholder="1개, 10g"></td>
+    <td><input type="text" value="${{(ing.note||'').replace(/"/g,'&quot;')}}" placeholder="메모"></td>
+    <td><button class="del-btn" onclick="this.closest('tr').remove()">×</button></td>`;
+  tb.appendChild(tr);
+}}
+function addRStep(t) {{ addRStepRow(t||''); }}
+function addRStepRow(t) {{
+  const list=document.getElementById('rsteps'); if(!list) return;
+  const idx=list.children.length+1;
+  const div=document.createElement('div');
+  div.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px';
+  div.innerHTML=`<span style="font-size:11px;color:#bbb;width:22px;flex-shrink:0">${{idx}}.</span>
+    <input type="text" value="${{t.replace(/"/g,'&quot;')}}" placeholder="단계 내용" style="flex:1;border:1px solid #e0e0e0;border-radius:5px;padding:7px 9px;font-size:12px;outline:none;font-family:inherit">
+    <button class="del-btn" onclick="this.parentNode.remove();renum()">×</button>`;
+  list.appendChild(div);
+}}
+function renum() {{
+  document.querySelectorAll('#rsteps>div span').forEach((s,i)=>s.textContent=(i+1)+'.');
+}}
+async function saveRecipe() {{
+  if(!selRec) return;
+  const ings=[], steps=[];
+  document.querySelectorAll('#ring tr').forEach(tr=>{{
+    const ins=tr.querySelectorAll('input'); if(ins.length<3) return;
+    ings.push({{name:ins[0].value,spec:ins[1].value,note:ins[2].value}});
+  }});
+  document.querySelectorAll('#rsteps input').forEach(inp=>{{ if(inp.value.trim()) steps.push(inp.value.trim()); }});
+  recData.recipes[selRec]={{description:document.getElementById('r-desc').value,ingredients:ings,steps,
+    notes:document.getElementById('r-note').value,updated_at:new Date().toISOString().slice(0,10)}};
+  recData.updated_at=new Date().toISOString().slice(0,10);
+  try {{
+    recSha=await ghPut('recipes.json',recSha,recData,'레시피 업데이트: '+selRec);
+    document.getElementById('rec-st').textContent='저장 완료 '+recData.updated_at;
+    renderRecList();
+  }} catch(e) {{ alert('저장 실패: '+e.message); }}
+}}
+
+// ── 거래 업체 ─────────────────────────────────
+let supSha=null, supData=null, selSup=null;
+async function initSuppliers() {{
+  const {{sha,data}}=await ghGet('suppliers.json');
+  supSha=sha; supData=data||{{updated_at:'',suppliers:[]}};
+  renderSupList();
+}}
+function renderSupList() {{
+  const el=document.getElementById('sup-list');
+  const sups=supData.suppliers||[];
+  el.innerHTML=sups.length?sups.map((s,i)=>`
+    <div class="li${{selSup===i?' active':''}}" onclick="selSupplier(${{i}})">
+      <div class="nm">${{s.name||'(이름 없음)'}}</div>
+      <div class="sub">자재 ${{(s.materials||[]).length}}종 · ${{s.contact||''}}</div>
+    </div>`).join('')
+    :'<div style="padding:20px;color:#ccc;font-size:12px;text-align:center">등록된 업체가 없습니다</div>';
+}}
+function addSupplier() {{ selSup=null; renderSupList(); renderSupDetail({{name:'',contact:'',email:'',address:'',note:'',materials:[]}},-1); }}
+function selSupplier(i) {{ selSup=i; renderSupList(); renderSupDetail(supData.suppliers[i],i); }}
+function renderSupDetail(s,idx) {{
+  const d=document.getElementById('sup-detail'), isNew=idx<0;
+  d.innerHTML=`
+    <h3 style="font-size:15px;margin-bottom:18px">${{isNew?'업체 추가':'업체 정보'}}</h3>
+    <div class="frow c2">
+      <div class="fg"><label>업체명 *</label><input type="text" id="s-nm" value="${{(s.name||'').replace(/"/g,'&quot;')}}" placeholder="업체명"></div>
+      <div class="fg"><label>연락처</label><input type="text" id="s-ct" value="${{(s.contact||'').replace(/"/g,'&quot;')}}" placeholder="010-0000-0000"></div>
+    </div>
+    <div class="frow c2">
+      <div class="fg"><label>이메일</label><input type="text" id="s-em" value="${{(s.email||'').replace(/"/g,'&quot;')}}" placeholder="email@example.com"></div>
+      <div class="fg"><label>주소</label><input type="text" id="s-ad" value="${{(s.address||'').replace(/"/g,'&quot;')}}"></div>
+    </div>
+    <div class="fg"><label>메모</label><textarea id="s-nt" rows="2">${{(s.note||'').replace(/</g,'&lt;')}}</textarea></div>
+    <div class="fg" style="margin-top:16px"><label>자재 목록</label>
+      <table class="dtbl"><thead><tr><th>자재명</th><th>규격</th><th>단위</th><th style="width:80px">단가(원)</th><th style="width:110px">최근구매일</th><th>메모</th><th></th></tr></thead>
+        <tbody id="smat"></tbody>
+      </table>
+      <button class="add-btn" onclick="addSMat()">+ 자재 추가</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-p" onclick="saveSup(${{idx}})">저장</button>
+      ${{!isNew?`<button class="btn btn-d" onclick="delSup(${{idx}})">삭제</button>`:''}}
+      <span class="save-st" id="sup-st"></span>
+    </div>`;
+  (s.materials||[]).forEach(m=>addSMatRow(m));
+}}
+function addSMat() {{ addSMatRow({{name:'',spec:'',unit:'',unit_price:0,last_purchase:'',note:''}}); }}
+function addSMatRow(m) {{
+  const tb=document.getElementById('smat'); if(!tb) return;
+  const tr=document.createElement('tr');
+  tr.innerHTML=`
+    <td><input type="text" value="${{(m.name||'').replace(/"/g,'&quot;')}}" placeholder="자재명"></td>
+    <td><input type="text" value="${{(m.spec||'').replace(/"/g,'&quot;')}}" placeholder="규격"></td>
+    <td><input type="text" value="${{(m.unit||'').replace(/"/g,'&quot;')}}" placeholder="단위" style="width:50px"></td>
+    <td><input type="number" value="${{m.unit_price||0}}" min="0"></td>
+    <td><input type="date" value="${{m.last_purchase||''}}"></td>
+    <td><input type="text" value="${{(m.note||'').replace(/"/g,'&quot;')}}" placeholder="메모"></td>
+    <td><button class="del-btn" onclick="this.closest('tr').remove()">×</button></td>`;
+  tb.appendChild(tr);
+}}
+async function saveSup(idx) {{
+  const nm=document.getElementById('s-nm').value.trim();
+  if(!nm) {{ alert('업체명을 입력하세요.'); return; }}
+  const mats=[];
+  document.querySelectorAll('#smat tr').forEach(tr=>{{
+    const ins=tr.querySelectorAll('input'); if(ins.length<6) return;
+    mats.push({{name:ins[0].value,spec:ins[1].value,unit:ins[2].value,
+      unit_price:parseFloat(ins[3].value)||0,last_purchase:ins[4].value,note:ins[5].value}});
+  }});
+  const sup={{name:nm,contact:document.getElementById('s-ct').value,email:document.getElementById('s-em').value,
+    address:document.getElementById('s-ad').value,note:document.getElementById('s-nt').value,materials:mats}};
+  if(idx<0) {{ supData.suppliers.push(sup); selSup=supData.suppliers.length-1; }}
+  else supData.suppliers[idx]=sup;
+  supData.updated_at=new Date().toISOString().slice(0,10);
+  try {{
+    supSha=await ghPut('suppliers.json',supSha,supData,'업체 업데이트: '+nm);
+    document.getElementById('sup-st').textContent='저장 완료';
+    renderSupList();
+  }} catch(e) {{ alert('저장 실패: '+e.message); }}
+}}
+async function delSup(idx) {{
+  if(!confirm(`'${{supData.suppliers[idx].name}}' 업체를 삭제하시겠습니까?`)) return;
+  supData.suppliers.splice(idx,1); selSup=null;
+  supData.updated_at=new Date().toISOString().slice(0,10);
+  try {{
+    supSha=await ghPut('suppliers.json',supSha,supData,'업체 삭제');
+    renderSupList();
+    document.getElementById('sup-detail').innerHTML='<div class="detail-empty">업체를 선택하거나 추가하세요</div>';
+  }} catch(e) {{ alert('삭제 실패: '+e.message); }}
+}}
+
+// ── Charts ───────────────────────────────────
+function initCharts() {{
+  new Chart(document.getElementById('salesChart'),{{
+    type:'bar',
+    data:{{labels:{chart_labels},datasets:[{{label:'매출(원)',data:{chart_data},
+      backgroundColor:'rgba(17,17,17,0.1)',borderColor:'#111',borderWidth:1.5,borderRadius:3}}]}},
+    options:{{plugins:{{legend:{{display:false}}}},scales:{{y:{{ticks:{{callback:v=>v.toLocaleString()+'원'}}}}}}}}
+  }});
+  new Chart(document.getElementById('statusChart'),{{
+    type:'doughnut',
+    data:{{labels:{status_labels},datasets:[{{data:{status_vals},
+      backgroundColor:['#111','#444','#777','#aaa','#ccc','#eee']}}]}},
+    options:{{plugins:{{legend:{{position:'bottom',labels:{{font:{{size:10}}}}}}}}}}
+  }});
+}}
 </script>
 </body>
 </html>"""
@@ -358,10 +763,9 @@ with open("dashboard.html", "w", encoding="utf-8") as f:
     f.write(html)
 
 print(f"dashboard.html 생성 완료!")
-print(f"   이번달 매출: {int(total_month):,}원 / 주문 {order_count}건")
-print(f"   브라우저에서 dashboard.html 파일을 열어보세요")
+print(f"기본 로그인: admin / papier2024")
+print(f"  이번달 매출: {int(total_month):,}원 / 주문 {order_count}건")
 
-import os
 if not os.environ.get("CI"):
     import webbrowser
     webbrowser.open("file://" + os.path.abspath("dashboard.html"))
