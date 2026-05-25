@@ -472,6 +472,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "Yiwu Tongxin Import & Export Cp,. Ltd.",
+      "contact": "",
+      "email": "",
+      "address": "알리바바",
+      "note": "",
+      "materials": [
+        {
+          "name": "이니셜",
+          "spec": "",
+          "unit": "",
+          "unit_price": 1598.5,
+          "moq": 50,
+          "option": "A",
+          "purchase_source": "알리바바",
+          "note": ""
+        }
+      ]
     }
   ]
 }
