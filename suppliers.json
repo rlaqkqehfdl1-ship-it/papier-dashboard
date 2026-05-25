@@ -510,6 +510,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "펀키스",
+      "contact": "",
+      "email": "",
+      "address": "온라인몰",
+      "note": "",
+      "materials": [
+        {
+          "name": "경해축",
+          "spec": "",
+          "unit": "",
+          "unit_price": 540,
+          "moq": 10,
+          "option": "",
+          "purchase_source": "온라인몰",
+          "note": ""
+        }
+      ]
     }
   ]
 }
