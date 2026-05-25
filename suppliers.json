@@ -226,7 +226,18 @@
       "email": "",
       "address": "동대문종합시장 A동 5178~9호",
       "note": "",
-      "materials": []
+      "materials": [
+        {
+          "name": "나비하트",
+          "spec": "",
+          "unit": "",
+          "unit_price": 1200,
+          "moq": 50,
+          "option": "화이트",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
     },
     {
       "name": "디비스토리",
