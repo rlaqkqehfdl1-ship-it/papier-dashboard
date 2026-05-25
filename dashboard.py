@@ -231,7 +231,9 @@ async function loadStock() {{
     const r = await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO}}/contents/stock.json`);
     const meta = await r.json();
     stockSha = meta.sha;
-    stockData = JSON.parse(atob(meta.content.replace(/\\n/g, '')));
+    const binary = atob(meta.content.replace(/\\n/g, ''));
+    const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+    stockData = JSON.parse(new TextDecoder('utf-8').decode(bytes));
     renderStock();
     updateLowStockKpi();
   }} catch(e) {{
@@ -291,7 +293,10 @@ async function saveStock() {{
     stockData.products[inp.dataset.pi].variants[inp.dataset.vi].qty = parseInt(inp.value) || 0;
   }});
   stockData.updated_at = new Date().toISOString().slice(0, 10);
-  const content = btoa(unescape(encodeURIComponent(JSON.stringify(stockData, null, 2))));
+  const text = JSON.stringify(stockData, null, 2);
+  const encBytes = new TextEncoder().encode(text);
+  let binary = ''; encBytes.forEach(b => binary += String.fromCharCode(b));
+  const content = btoa(binary);
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = '저장 중...';
   const r = await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO}}/contents/stock.json`, {{
