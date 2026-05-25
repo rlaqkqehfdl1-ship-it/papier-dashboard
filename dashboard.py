@@ -442,8 +442,10 @@ async function ghGet(f) {{
   const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
   return {{sha:m.sha,data:JSON.parse(new TextDecoder('utf-8').decode(bytes))}};
 }}
-async function ghPut(f,sha,data,msg) {{
+async function ghPut(f,data,msg) {{
   const tok=getToken(); if(!tok) throw new Error('토큰 없음');
+  // 저장 직전 항상 최신 SHA를 가져와서 stale-SHA 오류 원천 차단
+  const {{sha}}=await ghGet(f);
   const text=JSON.stringify(data,null,2);
   const eb=new TextEncoder().encode(text);
   let bin=''; eb.forEach(b=>bin+=String.fromCharCode(b));
@@ -453,7 +455,6 @@ async function ghPut(f,sha,data,msg) {{
     body:JSON.stringify(body)
   }});
   if(!r.ok) throw new Error((await r.json()).message);
-  return (await r.json()).content.sha;
 }}
 
 // ── Init ─────────────────────────────────────
@@ -463,11 +464,11 @@ function initApp() {{
 
 // ── 재고 ─────────────────────────────────────
 const SOLD={sold_json};
-let stockSha=null, stockData=null;
+let stockData=null;
 async function loadStock() {{
-  const {{sha,data}}=await ghGet('stock.json');
+  const {{data}}=await ghGet('stock.json');
   if(!data) return;
-  stockSha=sha; stockData=data; renderStock();
+  stockData=data; renderStock();
 }}
 function rc(r){{ return r<=0?'#e53':r<=5?'#e96':'#2a7'; }}
 function renderStock() {{
@@ -507,7 +508,7 @@ async function saveStock() {{
   const btn=document.getElementById('save-btn');
   btn.disabled=true; btn.textContent='저장 중...';
   try {{
-    stockSha=await ghPut('stock.json',stockSha,stockData,`재고 업데이트 ${{stockData.updated_at}}`);
+    await ghPut('stock.json',stockData,`재고 업데이트 ${{stockData.updated_at}}`);
     document.getElementById('stock-st').textContent=`저장: ${{stockData.updated_at}}`;
   }} catch(e) {{ alert('저장 실패: '+e.message); }}
   btn.disabled=false; btn.textContent='저장';
@@ -516,10 +517,10 @@ async function saveStock() {{
 // ── 원가 계산 ─────────────────────────────────
 const PRODS={product_names_json};
 const PRICES={product_prices_json};
-let costSha=null, costData=null, selCost=null;
+let costData=null, selCost=null;
 async function initCosts() {{
-  const {{sha,data}}=await ghGet('costs.json');
-  costSha=sha; costData=data||{{updated_at:'',products:{{}}}};
+  const {{data}}=await ghGet('costs.json');
+  costData=data||{{updated_at:'',products:{{}}}};
   renderCostList();
 }}
 function renderCostList() {{
@@ -618,18 +619,19 @@ async function saveCosts() {{
   costData.products[selCost]={{materials:mats,labor:parseFloat(document.getElementById('c-lab').value)||0,
     packaging:parseFloat(document.getElementById('c-pkg').value)||0,other:parseFloat(document.getElementById('c-oth').value)||0}};
   costData.updated_at=new Date().toISOString().slice(0,10);
+  const st=document.getElementById('cost-st'); st.textContent='저장 중...';
   try {{
-    costSha=await ghPut('costs.json',costSha,costData,'원가 업데이트: '+selCost);
-    document.getElementById('cost-st').textContent='저장 완료 '+costData.updated_at;
+    await ghPut('costs.json',costData,'원가 업데이트: '+selCost);
+    st.textContent='저장 완료 '+costData.updated_at;
     renderCostList();
-  }} catch(e) {{ alert('저장 실패: '+e.message); }}
+  }} catch(e) {{ st.textContent=''; alert('저장 실패: '+e.message); }}
 }}
 
 // ── BOM (부품 목록) ───────────────────────────
-let bomSha=null, bomData=null, curBomProd=null, bomFilter='';
+let bomData=null, curBomProd=null, bomFilter='';
 async function initBom() {{
-  const {{sha,data}}=await ghGet('bom.json');
-  bomSha=sha; bomData=data||{{updated_at:'',bom:{{}}}};
+  const {{data}}=await ghGet('bom.json');
+  bomData=data||{{updated_at:'',bom:{{}}}};
   renderBomFilter(); renderBomList();
 }}
 function getAllSuppliers() {{
@@ -796,18 +798,19 @@ async function saveBom() {{
   }});
   bomData.bom[curBomProd]=rows;
   bomData.updated_at=new Date().toISOString().slice(0,10);
+  const bst=document.getElementById('bom-st'); bst.textContent='저장 중...';
   try {{
-    bomSha=await ghPut('bom.json',bomSha,bomData,'BOM 업데이트: '+curBomProd);
-    document.getElementById('bom-st').textContent='저장 완료 '+bomData.updated_at;
+    await ghPut('bom.json',bomData,'BOM 업데이트: '+curBomProd);
+    bst.textContent='저장 완료 '+bomData.updated_at;
     renderBomFilter(); renderBomList();
-  }} catch(e) {{ alert('저장 실패: '+e.message); }}
+  }} catch(e) {{ bst.textContent=''; alert('저장 실패: '+e.message); }}
 }}
 
 // ── 거래 업체 ─────────────────────────────────
-let supSha=null, supData=null, selSup=null;
+let supData=null, selSup=null;
 async function initSuppliers() {{
-  const {{sha,data}}=await ghGet('suppliers.json');
-  supSha=sha; supData=data||{{updated_at:'',suppliers:[]}};
+  const {{data}}=await ghGet('suppliers.json');
+  supData=data||{{updated_at:'',suppliers:[]}};
   renderSupList();
 }}
 function renderSupList() {{
@@ -876,18 +879,19 @@ async function saveSup(idx) {{
   if(idx<0) {{ supData.suppliers.push(sup); selSup=supData.suppliers.length-1; }}
   else supData.suppliers[idx]=sup;
   supData.updated_at=new Date().toISOString().slice(0,10);
+  const sst=document.getElementById('sup-st'); sst.textContent='저장 중...';
   try {{
-    supSha=await ghPut('suppliers.json',supSha,supData,'업체 업데이트: '+nm);
-    document.getElementById('sup-st').textContent='저장 완료';
+    await ghPut('suppliers.json',supData,'업체 업데이트: '+nm);
+    sst.textContent='저장 완료';
     renderSupList();
-  }} catch(e) {{ alert('저장 실패: '+e.message); }}
+  }} catch(e) {{ sst.textContent=''; alert('저장 실패: '+e.message); }}
 }}
 async function delSup(idx) {{
   if(!confirm(`'${{supData.suppliers[idx].name}}' 업체를 삭제하시겠습니까?`)) return;
   supData.suppliers.splice(idx,1); selSup=null;
   supData.updated_at=new Date().toISOString().slice(0,10);
   try {{
-    supSha=await ghPut('suppliers.json',supSha,supData,'업체 삭제');
+    await ghPut('suppliers.json',supData,'업체 삭제');
     renderSupList();
     document.getElementById('sup-detail').innerHTML='<div class="detail-empty">업체를 선택하거나 추가하세요</div>';
   }} catch(e) {{ alert('삭제 실패: '+e.message); }}
