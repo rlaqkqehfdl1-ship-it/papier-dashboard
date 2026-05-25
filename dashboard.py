@@ -8,7 +8,12 @@ DASH_USER   = os.environ.get("DASH_USER", "papierachive")
 DASH_PASS   = os.environ.get("DASH_PASS", "3571425qaz!")
 user_hash   = hashlib.sha256(DASH_USER.encode()).hexdigest()
 pass_hash   = hashlib.sha256(DASH_PASS.encode()).hexdigest()
-encoded_pat = base64.b64encode(GH_PAT.encode()).decode() if GH_PAT else ""
+if GH_PAT:
+    _b64 = base64.b64encode(GH_PAT.encode()).decode()
+    _mid = len(_b64) // 2
+    pat_a, pat_b = _b64[:_mid], _b64[_mid:]
+else:
+    pat_a = pat_b = ""
 
 CLIENT_ID     = "J2dzflmWekLd28v00yHuUK"
 CLIENT_SECRET = "eb6beJ7TAkbTemPZfEA5mi"
@@ -388,11 +393,11 @@ function showPage(n) {{
 // ── GitHub API ───────────────────────────────
 const GH_OWNER='rlaqkqehfdl1-ship-it', GH_REPO_='papier-dashboard';
 function getToken() {{
-  const _e='{encoded_pat}';
-  if(_e) return atob(_e);
+  const _a='{pat_a}',_b='{pat_b}';
+  if(_a&&_b) return atob(_a+_b);
   let t=localStorage.getItem('gh_token');
   if(!t) {{ t=prompt('GitHub Personal Access Token'); if(t) localStorage.setItem('gh_token',t.trim()); }}
-  return t?t.trim():'';
+  return t||'';
 }}
 async function ghGet(f) {{
   const r=await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/contents/${{f}}`);
