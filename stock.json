@@ -1,0 +1,63 @@
+{
+  "updated_at": "2026-05-25",
+  "products": [
+    {
+      "product_name": "유실 [幽 室]",
+      "variants": [
+        {
+          "option": "단품",
+          "qty": 0
+        }
+      ]
+    },
+    {
+      "product_name": "흔적 [痕 迹]",
+      "variants": [
+        {
+          "option": "블루 키캡+청축",
+          "qty": 0
+        },
+        {
+          "option": "클리어 키캡+바다소금축",
+          "qty": 0
+        }
+      ]
+    },
+    {
+      "product_name": "유영 [流 映]",
+      "variants": [
+        {
+          "option": "단품",
+          "qty": 0
+        }
+      ]
+    },
+    {
+      "product_name": "소호 [素 蝴]",
+      "variants": [
+        {
+          "option": "단품",
+          "qty": 0
+        }
+      ]
+    },
+    {
+      "product_name": "잔화 [殘 花]",
+      "variants": [
+        {
+          "option": "단품",
+          "qty": 0
+        }
+      ]
+    },
+    {
+      "product_name": "중첩 [重 疊]",
+      "variants": [
+        {
+          "option": "단품",
+          "qty": 0
+        }
+      ]
+    }
+  ]
+}
