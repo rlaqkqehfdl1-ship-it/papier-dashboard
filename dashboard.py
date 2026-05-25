@@ -217,6 +217,41 @@ canvas{{max-height:200px}}
 .chart-btn{{background:#f0f0f0;border:none;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;color:#888;transition:all .15s}}
 .chart-btn.active{{background:#111;color:#fff}}
 .chart-btn:hover:not(.active){{background:#ddd}}
+/* Calendar */
+.cal-wrap{{max-width:780px;margin:0 auto}}
+.cal-header{{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}}
+.cal-header h2{{font-size:18px;font-weight:700;color:#111}}
+.cal-nav{{background:none;border:1px solid #e0e0e0;border-radius:7px;padding:5px 14px;cursor:pointer;font-size:16px;color:#555;font-family:inherit;transition:background .12s}}
+.cal-nav:hover{{background:#f5f5f5}}
+.cal-grid{{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}}
+.cal-dh{{text-align:center;font-size:11px;font-weight:600;color:#bbb;padding:4px 0;margin-bottom:2px}}
+.cal-dh:first-child{{color:#e07070}}.cal-dh:last-child{{color:#6090e0}}
+.cal-day{{min-height:70px;border:1px solid #f0f0f0;border-radius:9px;padding:7px;cursor:pointer;transition:background .12s;position:relative;background:#fff}}
+.cal-day:hover{{background:#f8f8f8}}
+.cal-day.selected{{border-color:#111;background:#f2f2f2}}
+.cal-day.today .cal-dn{{background:#111;color:#fff;border-radius:50%}}
+.cal-day.other-m{{opacity:.3;pointer-events:none}}
+.cal-day.sun .cal-dn{{color:#e07070}}.cal-day.sat .cal-dn{{color:#6090e0}}
+.cal-day.today.sun .cal-dn,.cal-day.today.sat .cal-dn{{color:#fff}}
+.cal-dn{{font-size:12px;font-weight:600;width:22px;height:22px;display:flex;align-items:center;justify-content:center;margin-bottom:4px}}
+.cal-dots{{display:flex;flex-wrap:wrap;gap:2px}}
+.cal-dot{{width:6px;height:6px;border-radius:50%;background:#aaa}}
+.cal-dot.판매행사{{background:#4caf50}}.cal-dot.발주{{background:#ff9800}}
+.cal-dot.미팅{{background:#2196f3}}.cal-dot.기타{{background:#9e9e9e}}
+/* Event section */
+.evt-section{{background:#fff;border-radius:10px;padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-top:14px}}
+.evt-sec-head{{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}}
+.evt-sec-head h3{{font-size:13px;font-weight:600;color:#555}}
+.evt-card{{border:1px solid #f0f0f0;border-radius:8px;padding:12px 14px;margin-bottom:8px;display:flex;gap:12px;align-items:flex-start}}
+.evt-badge{{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;white-space:nowrap;margin-top:2px;flex-shrink:0}}
+.evt-badge.판매행사{{background:#e8f5e9;color:#2e7d32}}.evt-badge.발주{{background:#fff3e0;color:#e65100}}
+.evt-badge.미팅{{background:#e3f2fd;color:#1565c0}}.evt-badge.기타{{background:#f5f5f5;color:#757575}}
+.evt-body{{flex:1;min-width:0}}
+.evt-title{{font-size:13px;font-weight:600;color:#111;margin-bottom:3px}}
+.evt-meta{{font-size:11px;color:#aaa;margin-bottom:4px}}
+.evt-detail{{font-size:12px;color:#666;white-space:pre-wrap}}
+.evt-del{{background:none;border:none;color:#ccc;cursor:pointer;font-size:18px;padding:0 4px;line-height:1;flex-shrink:0}}
+.evt-del:hover{{color:#e53}}
 /* Split layout */
 .split{{display:grid;grid-template-columns:260px 1fr;gap:14px;min-height:calc(100vh - 160px)}}
 .list-panel{{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;display:flex;flex-direction:column}}
@@ -322,6 +357,7 @@ canvas{{max-height:200px}}
       <a id="nav-costs"                    onclick="showPage('costs')">    <span class="ic">🧮</span>원가 계산</a>
       <a id="nav-bom"                      onclick="showPage('bom')">      <span class="ic">📋</span>BOM</a>
       <a id="nav-suppliers"                onclick="showPage('suppliers')"><span class="ic">🏢</span>거래 업체</a>
+      <a id="nav-schedule"                 onclick="showPage('schedule')"> <span class="ic">📅</span>일정</a>
     </nav>
     <div class="logout"><button onclick="logout()">로그아웃</button></div>
   </div>
@@ -418,6 +454,53 @@ canvas{{max-height:200px}}
 </div>
 </div>
 
+<!-- 일정 -->
+    <div class="page" id="page-schedule">
+      <div class="cal-wrap">
+        <div style="background:#fff;border-radius:10px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.07)">
+          <div class="cal-header">
+            <button class="cal-nav" onclick="calMove(-1)">&#8249;</button>
+            <h2 id="cal-title"></h2>
+            <button class="cal-nav" onclick="calMove(1)">&#8250;</button>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+        </div>
+        <div class="evt-section">
+          <div class="evt-sec-head">
+            <h3 id="evt-date-title">날짜를 선택하세요</h3>
+            <button class="btn btn-p" id="add-evt-btn" onclick="openSchModal()" style="display:none;padding:6px 12px;font-size:12px">+ 일정 추가</button>
+          </div>
+          <div id="evt-list"><div style="color:#ccc;font-size:13px;text-align:center;padding:28px 0">날짜를 클릭하면 일정을 확인할 수 있어요</div></div>
+        </div>
+      </div>
+    </div>
+
+<!-- 일정 추가 모달 -->
+<div id="sch-modal" class="modal-bg" onclick="if(event.target===this)closeSchModal()" style="display:none">
+  <div class="modal-box" style="max-width:440px;padding:0">
+    <div class="modal-head"><h4>일정 추가</h4><button class="modal-close" onclick="closeSchModal()">×</button></div>
+    <div style="padding:20px">
+      <div class="fg"><label>제목 *</label><input type="text" id="sch-title" placeholder="일정 제목을 입력하세요"></div>
+      <div class="frow c2">
+        <div class="fg"><label>날짜 *</label><input type="date" id="sch-date"></div>
+        <div class="fg"><label>시간</label><input type="time" id="sch-time"></div>
+      </div>
+      <div class="fg"><label>장소</label><input type="text" id="sch-loc" placeholder="장소 (선택)"></div>
+      <div class="fg"><label>구분</label>
+        <select id="sch-type" style="width:100%;border:1px solid #e0e0e0;border-radius:7px;padding:8px 10px;font-size:13px;outline:none;font-family:inherit">
+          <option>판매행사</option><option>발주</option><option>미팅</option><option>기타</option>
+        </select>
+      </div>
+      <div class="fg"><label>상세내용</label><textarea id="sch-detail" placeholder="상세 내용 (선택)" style="min-height:80px"></textarea></div>
+      <div class="btn-row" style="margin-top:4px">
+        <button class="btn btn-g" onclick="closeSchModal()">취소</button>
+        <button class="btn btn-p" onclick="saveSchEvent()">추가</button>
+        <span id="sch-st" class="save-st"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 부품 검색 모달 -->
 <div id="part-modal" class="modal-bg" onclick="if(event.target===this)closePartModal()">
   <div class="modal-box">
@@ -510,7 +593,7 @@ async function ghPut(f,data,msg) {{
 
 // ── Init ─────────────────────────────────────
 function initApp() {{
-  initCharts(); loadStock(); initCosts(); initBom(); initSuppliers();
+  initCharts(); loadStock(); initCosts(); initBom(); initSuppliers(); initSchedule();
 }}
 
 // ── 재고 ─────────────────────────────────────
@@ -1071,6 +1154,126 @@ async function delSup(idx) {{
     renderSupList();
     document.getElementById('sup-detail').innerHTML='<div class="detail-empty">업체를 선택하거나 추가하세요</div>';
   }} catch(e) {{ alert('삭제 실패: '+e.message); }}
+}}
+
+// ── Schedule ─────────────────────────────────
+let schData=null, calYear=0, calMonth=0, selDate='';
+const DOW=['일','월','화','수','목','금','토'];
+
+async function initSchedule() {{
+  const {{data}}=await ghGet('schedule.json');
+  schData=data||{{events:[]}};
+  const now=new Date();
+  calYear=now.getFullYear(); calMonth=now.getMonth();
+  renderCalendar();
+}}
+
+function calMove(dir) {{
+  calMonth+=dir;
+  if(calMonth<0){{calMonth=11;calYear--;}}
+  if(calMonth>11){{calMonth=0;calYear++;}}
+  renderCalendar();
+}}
+
+function renderCalendar() {{
+  document.getElementById('cal-title').textContent=`${{calYear}}년 ${{calMonth+1}}월`;
+  const evtDates={{}};
+  (schData&&schData.events||[]).forEach(e=>{{
+    if(!evtDates[e.date]) evtDates[e.date]=[];
+    evtDates[e.date].push(e.type||'기타');
+  }});
+  const todayStr=new Date().toISOString().slice(0,10);
+  const first=new Date(calYear,calMonth,1).getDay();
+  const last=new Date(calYear,calMonth+1,0).getDate();
+  const prevLast=new Date(calYear,calMonth,0).getDate();
+  let html=DOW.map(d=>`<div class="cal-dh">${{d}}</div>`).join('');
+  for(let i=first-1;i>=0;i--)
+    html+=`<div class="cal-day other-m"><div class="cal-dn">${{prevLast-i}}</div></div>`;
+  for(let d=1;d<=last;d++) {{
+    const ds=`${{calYear}}-${{String(calMonth+1).padStart(2,'0')}}-${{String(d).padStart(2,'0')}}`;
+    const dow=new Date(calYear,calMonth,d).getDay();
+    const cls=['cal-day'];
+    if(ds===todayStr) cls.push('today');
+    if(ds===selDate) cls.push('selected');
+    if(dow===0) cls.push('sun'); if(dow===6) cls.push('sat');
+    const dots=(evtDates[ds]||[]).slice(0,5).map(t=>`<div class="cal-dot ${{t}}"></div>`).join('');
+    html+=`<div class="${{cls.join(' ')}}" onclick="selectDate('${{ds}}')"><div class="cal-dn">${{d}}</div><div class="cal-dots">${{dots}}</div></div>`;
+  }}
+  const rem=(7-(first+last)%7)%7;
+  for(let d=1;d<=rem;d++) html+=`<div class="cal-day other-m"><div class="cal-dn">${{d}}</div></div>`;
+  document.getElementById('cal-grid').innerHTML=html;
+}}
+
+function selectDate(ds) {{
+  selDate=ds;
+  renderCalendar();
+  const dt=new Date(ds+'T00:00:00');
+  document.getElementById('evt-date-title').textContent=`${{dt.getMonth()+1}}월 ${{dt.getDate()}}일 (${{DOW[dt.getDay()]}}) 일정`;
+  document.getElementById('add-evt-btn').style.display='';
+  renderEvtList();
+}}
+
+function renderEvtList() {{
+  const evts=(schData&&schData.events||[]).filter(e=>e.date===selDate)
+    .sort((a,b)=>(a.time||'').localeCompare(b.time||''));
+  const el=document.getElementById('evt-list');
+  if(!evts.length){{
+    el.innerHTML='<div style="color:#ccc;font-size:13px;text-align:center;padding:28px 0">이 날짜에 등록된 일정이 없어요</div>';
+    return;
+  }}
+  el.innerHTML=evts.map(e=>`
+    <div class="evt-card">
+      <span class="evt-badge ${{e.type||'기타'}}">${{e.type||'기타'}}</span>
+      <div class="evt-body">
+        <div class="evt-title">${{e.title||''}}</div>
+        <div class="evt-meta">${{[e.time,e.location].filter(Boolean).join(' · ')}}</div>
+        ${{e.detail?`<div class="evt-detail">${{e.detail}}</div>`:''}}
+      </div>
+      <button class="evt-del" onclick="deleteSchEvent(${{e.id}})">×</button>
+    </div>`).join('');
+}}
+
+function openSchModal() {{
+  document.getElementById('sch-date').value=selDate;
+  document.getElementById('sch-title').value='';
+  document.getElementById('sch-time').value='';
+  document.getElementById('sch-loc').value='';
+  document.getElementById('sch-detail').value='';
+  document.getElementById('sch-type').value='판매행사';
+  document.getElementById('sch-st').textContent='';
+  document.getElementById('sch-modal').style.display='flex';
+}}
+function closeSchModal(){{ document.getElementById('sch-modal').style.display='none'; }}
+
+async function saveSchEvent() {{
+  const title=document.getElementById('sch-title').value.trim();
+  const date=document.getElementById('sch-date').value;
+  if(!title||!date){{alert('제목과 날짜는 필수입니다.');return;}}
+  const evt={{id:Date.now(),date,title,
+    time:document.getElementById('sch-time').value,
+    location:document.getElementById('sch-loc').value.trim(),
+    type:document.getElementById('sch-type').value,
+    detail:document.getElementById('sch-detail').value.trim()}};
+  schData.events.push(evt);
+  const st=document.getElementById('sch-st'); st.textContent='저장 중...';
+  try {{
+    await ghPut('schedule.json',schData,'일정 추가: '+title);
+    st.textContent='저장 완료';
+    setTimeout(closeSchModal,600);
+    if(selDate===date) renderEvtList();
+    renderCalendar();
+  }} catch(e) {{ st.textContent=''; schData.events.pop(); alert('저장 실패: '+e.message); }}
+}}
+
+async function deleteSchEvent(id) {{
+  if(!confirm('이 일정을 삭제할까요?')) return;
+  const idx=schData.events.findIndex(e=>e.id===id);
+  if(idx<0) return;
+  const removed=schData.events.splice(idx,1)[0];
+  try {{
+    await ghPut('schedule.json',schData,'일정 삭제');
+    renderEvtList(); renderCalendar();
+  }} catch(e) {{ schData.events.splice(idx,0,removed); alert('삭제 실패: '+e.message); }}
 }}
 
 // ── Charts ───────────────────────────────────
