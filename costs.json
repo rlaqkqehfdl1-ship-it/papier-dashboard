@@ -298,7 +298,56 @@
       "consumer_price": 20900
     },
     "소호 [素 蝴]": {
-      "materials": [],
+      "materials": [
+        {
+          "name": "물방울 키링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 700
+        },
+        {
+          "name": "립밤 케이스",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 1116.54
+        },
+        {
+          "name": "메인O링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 72
+        },
+        {
+          "name": "비정형 거울",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 1800.24
+        },
+        {
+          "name": "팬던트 O링",
+          "qty": 3,
+          "unit": "개",
+          "unit_price": 25
+        },
+        {
+          "name": "회전고리",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 475
+        },
+        {
+          "name": "체인",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 666
+        },
+        {
+          "name": "나비",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 2300
+        }
+      ],
       "items": [
         {
           "name": "지퍼백",
@@ -338,16 +387,16 @@
         {
           "name": "포장자재비",
           "supplier": "쿠팡",
-          "qty": 2,
+          "qty": 1,
           "unit_price": 67,
           "spec": "습자지, 크라프트지"
         },
         {
-          "name": "",
-          "supplier": "",
-          "qty": 0,
-          "unit_price": 0,
-          "spec": ""
+          "name": "수입예비비",
+          "supplier": "타배 수수료",
+          "qty": 1,
+          "unit_price": 443,
+          "spec": "관세+부가세+배송비+관세사수수료"
         },
         {
           "name": "",
@@ -365,7 +414,7 @@
         }
       ],
       "shipping": 4000,
-      "consumer_price": 0
+      "consumer_price": 27000
     },
     "잔화 [殘 花]": {
       "materials": [],
