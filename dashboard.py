@@ -219,6 +219,19 @@ canvas{{max-height:200px}}
 .chart-btn:hover:not(.active){{background:#ddd}}
 /* Calendar */
 .cal-wrap{{width:100%}}
+.cal-layout{{display:grid;grid-template-columns:1fr 220px;gap:14px;align-items:start}}
+.cal-evt-prev{{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 4px;border-radius:3px;margin-bottom:1px;line-height:1.5;cursor:pointer}}
+.cal-evt-prev.판매행사{{background:#e8f5e9;color:#2e7d32}}
+.cal-evt-prev.발주{{background:#fff3e0;color:#e65100}}
+.cal-evt-prev.미팅{{background:#e3f2fd;color:#1565c0}}
+.cal-evt-prev.기타{{background:#f5f5f5;color:#555}}
+.sum-panel{{background:#fff;border-radius:10px;padding:16px 18px;box-shadow:0 1px 3px rgba(0,0,0,.07);position:sticky;top:12px;max-height:calc(100vh - 80px);overflow-y:auto}}
+.sum-panel>h3{{font-size:12px;font-weight:600;color:#555;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #f0f0f0}}
+.sum-item{{padding:8px 0;border-bottom:1px solid #f8f8f8}}
+.sum-item:last-child{{border-bottom:none}}
+.sum-d{{font-size:10px;color:#aaa;margin-bottom:3px;display:flex;align-items:center;gap:4px}}
+.sum-t{{font-size:12px;font-weight:600;color:#111}}
+.sum-m{{font-size:10px;color:#bbb;margin-top:2px}}
 .cal-header{{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}}
 .cal-header h2{{font-size:18px;font-weight:700;color:#111}}
 .cal-nav{{background:none;border:1px solid #e0e0e0;border-radius:7px;padding:5px 14px;cursor:pointer;font-size:16px;color:#555;font-family:inherit;transition:background .12s}}
@@ -453,20 +466,28 @@ canvas{{max-height:200px}}
     <!-- 일정 -->
     <div class="page" id="page-schedule" style="padding:6px 24px 24px">
       <div class="cal-wrap">
-        <div style="background:#fff;border-radius:10px;padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.07)">
-          <div class="cal-header">
-            <button class="cal-nav" onclick="calMove(-1)">&#8249;</button>
-            <h2 id="cal-title"></h2>
-            <button class="cal-nav" onclick="calMove(1)">&#8250;</button>
+        <div class="cal-layout">
+          <div>
+            <div style="background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 1px 3px rgba(0,0,0,.07)">
+              <div class="cal-header">
+                <button class="cal-nav" onclick="calMove(-1)">&#8249;</button>
+                <h2 id="cal-title"></h2>
+                <button class="cal-nav" onclick="calMove(1)">&#8250;</button>
+              </div>
+              <div class="cal-grid" id="cal-grid"></div>
+            </div>
+            <div class="evt-section">
+              <div class="evt-sec-head">
+                <h3 id="evt-date-title">날짜를 선택하세요</h3>
+                <button class="btn btn-p" id="add-evt-btn" onclick="openSchModal()" style="display:none;padding:6px 12px;font-size:12px">+ 일정 추가</button>
+              </div>
+              <div id="evt-list"><div style="color:#ccc;font-size:13px;text-align:center;padding:28px 0">날짜를 클릭하면 일정을 확인할 수 있어요</div></div>
+            </div>
           </div>
-          <div class="cal-grid" id="cal-grid"></div>
-        </div>
-        <div class="evt-section">
-          <div class="evt-sec-head">
-            <h3 id="evt-date-title">날짜를 선택하세요</h3>
-            <button class="btn btn-p" id="add-evt-btn" onclick="openSchModal()" style="display:none;padding:6px 12px;font-size:12px">+ 일정 추가</button>
+          <div class="sum-panel">
+            <h3 id="sum-title">월 일정</h3>
+            <div id="sum-list"><div style="color:#ccc;font-size:12px;text-align:center;padding:20px 0">불러오는 중...</div></div>
           </div>
-          <div id="evt-list"><div style="color:#ccc;font-size:13px;text-align:center;padding:28px 0">날짜를 클릭하면 일정을 확인할 수 있어요</div></div>
         </div>
       </div>
     </div>
@@ -1180,7 +1201,7 @@ function renderCalendar() {{
   const evtDates={{}};
   (schData&&schData.events||[]).forEach(e=>{{
     if(!evtDates[e.date]) evtDates[e.date]=[];
-    evtDates[e.date].push(e.type||'기타');
+    evtDates[e.date].push(e);
   }});
   const todayStr=new Date().toISOString().slice(0,10);
   const first=new Date(calYear,calMonth,1).getDay();
@@ -1196,12 +1217,39 @@ function renderCalendar() {{
     if(ds===todayStr) cls.push('today');
     if(ds===selDate) cls.push('selected');
     if(dow===0) cls.push('sun'); if(dow===6) cls.push('sat');
-    const dots=(evtDates[ds]||[]).slice(0,5).map(t=>`<div class="cal-dot ${{t}}"></div>`).join('');
-    html+=`<div class="${{cls.join(' ')}}" onclick="selectDate('${{ds}}')"><div class="cal-dn">${{d}}</div><div class="cal-dots">${{dots}}</div></div>`;
+    const dayEvts=evtDates[ds]||[];
+    const previews=dayEvts.slice(0,3).map(e=>`<div class="cal-evt-prev ${{e.type||'기타'}}">${{e.title||''}}</div>`).join('');
+    html+=`<div class="${{cls.join(' ')}}" onclick="selectDate('${{ds}}')"><div class="cal-dn">${{d}}</div>${{previews}}</div>`;
   }}
   const rem=(7-(first+last)%7)%7;
   for(let d=1;d<=rem;d++) html+=`<div class="cal-day other-m"><div class="cal-dn">${{d}}</div></div>`;
   document.getElementById('cal-grid').innerHTML=html;
+  renderMonthlySummary();
+}}
+
+function renderMonthlySummary() {{
+  const ym=`${{calYear}}-${{String(calMonth+1).padStart(2,'0')}}`;
+  const ttl=document.getElementById('sum-title');
+  const el=document.getElementById('sum-list');
+  if(ttl) ttl.textContent=`${{calMonth+1}}월 일정`;
+  if(!el) return;
+  const evts=(schData&&schData.events||[])
+    .filter(e=>e.date.startsWith(ym))
+    .sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
+  if(!evts.length){{
+    el.innerHTML='<div style="color:#ccc;font-size:12px;text-align:center;padding:20px 0">이번 달 일정 없음</div>';
+    return;
+  }}
+  el.innerHTML=evts.map(e=>{{
+    const dt=new Date(e.date+'T00:00:00');
+    const ds=`${{dt.getMonth()+1}}/${{dt.getDate()}} (${{DOW[dt.getDay()]}})`;
+    return `<div class="sum-item" onclick="selectDate('${{e.date}}')" style="cursor:pointer">
+      <div class="sum-d">${{ds}} <span class="evt-badge ${{e.type||'기타'}}" style="font-size:9px;padding:1px 5px">${{e.type||'기타'}}</span></div>
+      <div class="sum-t">${{e.title||''}}</div>
+      ${{e.location?`<div class="sum-m">📍 ${{e.location}}</div>`:''}}
+      ${{e.time?`<div class="sum-m">🕐 ${{e.time}}</div>`:''}}
+    </div>`;
+  }}).join('');
 }}
 
 function selectDate(ds) {{
