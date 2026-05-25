@@ -33,20 +33,38 @@ def H():
 def get(path, **params):
     return requests.get(f"{BASE}{path}", headers=H(), params=params).json()
 
+def get_all_orders(start_date, end_date, embed=None):
+    """페이지네이션으로 전체 주문 수집"""
+    all_orders, offset = [], 0
+    params = {"start_date": start_date, "end_date": end_date, "limit": 100}
+    if embed:
+        params["embed"] = embed
+    while True:
+        params["offset"] = offset
+        batch = requests.get(f"{BASE}/orders", headers=H(), params=params).json().get("orders", [])
+        all_orders.extend(batch)
+        if len(batch) < 100:
+            break
+        offset += 100
+    return all_orders
+
 # ── 데이터 수집 ──────────────────────────────
-today     = datetime.now().strftime("%Y-%m-%d")
+today       = datetime.now().strftime("%Y-%m-%d")
 month_start = datetime.now().strftime("%Y-%m-01")
-yesterday = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+all_start   = "2015-01-01"
 
 print("데이터 수집 중...")
-orders_month = get("/orders", start_date=month_start, end_date=today, limit=100, embed="items").get("orders", [])
-orders_today = [o for o in orders_month if o["order_date"][:10] == today]
-products     = get("/products", limit=100).get("products", [])
+orders_month  = get_all_orders(month_start, today, embed="items")
+orders_today  = [o for o in orders_month if o["order_date"][:10] == today]
+orders_all    = get_all_orders(all_start, today)
+products      = get("/products", limit=100).get("products", [])
 
 # ── 집계 ─────────────────────────────────────
 total_month  = sum(float(o["actual_order_amount"]["order_price_amount"]) for o in orders_month)
 total_today  = sum(float(o["actual_order_amount"]["order_price_amount"]) for o in orders_today)
+total_all    = sum(float(o["actual_order_amount"]["order_price_amount"]) for o in orders_all)
 order_count  = len(orders_month)
+order_count_all = len(orders_all)
 
 status_count = defaultdict(int)
 for o in orders_month:
@@ -69,7 +87,7 @@ real_products = [p for p in products if float(p.get("price","0")) > 0]
 low_stock     = [p for p in real_products if int(p.get("stock_quantity") or 0) <= 5]
 
 # ── HTML 생성 ─────────────────────────────────
-now_str = datetime.now().strftime("%Y년 %m월 %d일 %H:%M 기준")
+now_str = datetime.now().strftime("%Y년 %m월 %d일 %H:%M 기준") + " · 매일 오전 10시 자동 갱신"
 chart_labels = json.dumps([d[0][5:] for d in daily_sorted])
 chart_data   = json.dumps([d[1] for d in daily_sorted])
 
@@ -140,9 +158,9 @@ html = f"""<!DOCTYPE html>
 <div class="container">
 
   <div class="kpi-grid">
-    <div class="kpi"><div class="label">이번달 총 매출</div><div class="value">{int(total_month):,}원</div><div class="sub">{month_start} ~ {today}</div></div>
+    <div class="kpi"><div class="label">누적 총 매출</div><div class="value">{int(total_all):,}원</div><div class="sub">전체 기간 · {order_count_all}건</div></div>
+    <div class="kpi"><div class="label">이번달 총 매출</div><div class="value">{int(total_month):,}원</div><div class="sub">{month_start} ~ {today} · {order_count}건</div></div>
     <div class="kpi"><div class="label">오늘 매출</div><div class="value">{int(total_today):,}원</div><div class="sub">{today}</div></div>
-    <div class="kpi"><div class="label">이번달 주문 수</div><div class="value">{order_count}건</div></div>
     <div class="kpi"><div class="label">재고 부족 상품</div><div class="value" style="color:{'#e53' if low_stock else '#2a7'}">{len(low_stock)}개</div><div class="sub">5개 이하 기준</div></div>
   </div>
 
