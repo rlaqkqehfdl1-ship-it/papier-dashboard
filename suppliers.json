@@ -394,6 +394,115 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "스댕24",
+      "contact": "",
+      "email": "",
+      "address": "동대문종합시장 A동 5042호",
+      "note": "",
+      "materials": [
+        {
+          "name": "121 열쇠",
+          "spec": "",
+          "unit": "",
+          "unit_price": 2200,
+          "moq": 50,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "삼각 카라비너",
+          "spec": "",
+          "unit": "",
+          "unit_price": 900,
+          "moq": 50,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "병따개 카라비너(써)",
+          "spec": "",
+          "unit": "",
+          "unit_price": 1800,
+          "moq": 50,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "나비총알",
+          "spec": "",
+          "unit": "",
+          "unit_price": 2200,
+          "moq": 50,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "개고리+회전고리(키링대)",
+          "spec": "",
+          "unit": "",
+          "unit_price": 500,
+          "moq": 100,
+          "option": "투명+회전고리",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "물방울 키링",
+          "spec": "",
+          "unit": "",
+          "unit_price": 700,
+          "moq": 50,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "체인",
+          "spec": "",
+          "unit": "",
+          "unit_price": 666,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": "1m/2000원"
+        },
+        {
+          "name": "나비",
+          "spec": "",
+          "unit": "",
+          "unit_price": 2300,
+          "moq": 50,
+          "option": "블랙에폭시",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "물방울 개고리",
+          "spec": "",
+          "unit": "",
+          "unit_price": 800,
+          "moq": 50,
+          "option": "3번(회정고리포함)",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "",
+          "spec": "",
+          "unit": "",
+          "unit_price": 0,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "",
+          "note": ""
+        }
+      ]
     }
   ]
 }
