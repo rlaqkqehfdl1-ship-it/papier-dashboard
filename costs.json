@@ -2,14 +2,7 @@
   "updated_at": "2026-05-25",
   "products": {
     "유실 [幽 室]": {
-      "materials": [
-        {
-          "name": "",
-          "qty": 1,
-          "unit": "개",
-          "unit_price": 0
-        }
-      ],
+      "materials": [],
       "labor": 0,
       "packaging": 0,
       "other": 0
