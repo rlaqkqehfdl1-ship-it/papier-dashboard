@@ -283,9 +283,6 @@
     },
     "잔화 [殘 花]": {
       "materials": [],
-      "labor": 0,
-      "packaging": 0,
-      "other": 0,
       "items": [
         {
           "name": "지퍼백",
@@ -350,7 +347,9 @@
           "unit_price": 0,
           "spec": ""
         }
-      ]
+      ],
+      "shipping": 4000,
+      "consumer_price": 0
     },
     "중첩 [重 疊]": {
       "materials": [],
