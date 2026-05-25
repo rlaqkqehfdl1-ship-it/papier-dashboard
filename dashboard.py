@@ -473,7 +473,7 @@ async function initCosts() {{
   renderCostList();
 }}
 function renderCostList() {{
-  document.getElementById('costs-list').innerHTML=PRODS.map(n=>{{
+  document.getElementById('costs-list').innerHTML=PRODS.map((n,i)=>{{
     const c=costData.products[n];
     let sub='';
     if(c) {{
@@ -482,11 +482,10 @@ function renderCostList() {{
       const pr=PRICES[n]||0, mg=pr>0?Math.round((pr-tot)/pr*100):0;
       sub=`<div class="sub">원가 ${{tot.toLocaleString()}}원 · 마진 ${{mg}}%</div>`;
     }}
-    return `<div class="li${{selCost===n?' active':''}}" onclick="selCostProd('${{n.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}}')">\
-<div class="nm">${{n}}</div>${{sub}}</div>`;
+    return `<div class="li${{selCost===n?' active':''}}" data-idx="${{i}}" onclick="selCostProd(this.dataset.idx)"><div class="nm">${{n}}</div>${{sub}}</div>`;
   }}).join('');
 }}
-function selCostProd(n) {{ selCost=n; renderCostList(); renderCostDetail(n); }}
+function selCostProd(idx) {{ const n=PRODS[idx]; selCost=n; renderCostList(); renderCostDetail(n); }}
 function renderCostDetail(n) {{
   const d=document.getElementById('costs-detail');
   const c=costData.products[n]||{{materials:[],labor:0,packaging:0,other:0}};
@@ -579,14 +578,13 @@ async function initRecipes() {{
   renderRecList();
 }}
 function renderRecList() {{
-  document.getElementById('recipes-list').innerHTML=PRODS.map(n=>{{
+  document.getElementById('recipes-list').innerHTML=PRODS.map((n,i)=>{{
     const r=recData.recipes[n];
     const sub=r?`<div class="sub">단계 ${{(r.steps||[]).length}}개 · ${{r.updated_at||''}}</div>`:'';
-    return `<div class="li${{selRec===n?' active':''}}" onclick="selRecProd('${{n.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}}')">\
-<div class="nm">${{n}}</div>${{sub}}</div>`;
+    return `<div class="li${{selRec===n?' active':''}}" data-idx="${{i}}" onclick="selRecProd(this.dataset.idx)"><div class="nm">${{n}}</div>${{sub}}</div>`;
   }}).join('');
 }}
-function selRecProd(n) {{ selRec=n; renderRecList(); renderRecDetail(n); }}
+function selRecProd(idx) {{ const n=PRODS[idx]; selRec=n; renderRecList(); renderRecDetail(n); }}
 function renderRecDetail(n) {{
   const d=document.getElementById('recipes-detail');
   const r=recData.recipes[n]||{{description:'',ingredients:[],steps:[],notes:''}};
