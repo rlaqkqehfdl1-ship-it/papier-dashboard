@@ -127,7 +127,44 @@
       "consumer_price": 19900
     },
     "흔적 [痕 迹]": {
-      "materials": [],
+      "materials": [
+        {
+          "name": "개고리+회전고리(키링대)",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 500
+        },
+        {
+          "name": "투명 아크릴",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 632
+        },
+        {
+          "name": "이니셜",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 1598.5
+        },
+        {
+          "name": "키캡",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 397.98
+        },
+        {
+          "name": "경해축",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 540
+        },
+        {
+          "name": "본체+스위치",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 552
+        }
+      ],
       "items": [
         {
           "name": "지퍼백",
@@ -167,16 +204,16 @@
         {
           "name": "포장자재비",
           "supplier": "쿠팡",
-          "qty": 2,
+          "qty": 1,
           "unit_price": 67,
           "spec": "습자지, 크라프트지"
         },
         {
-          "name": "",
-          "supplier": "",
-          "qty": 0,
-          "unit_price": 0,
-          "spec": ""
+          "name": "수입예비비",
+          "supplier": "타배 수수료",
+          "qty": 1,
+          "unit_price": 443,
+          "spec": "관세+부가세+배송비+관세사수수료"
         },
         {
           "name": "",
