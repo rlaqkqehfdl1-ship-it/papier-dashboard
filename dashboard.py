@@ -8,6 +8,7 @@ DASH_USER   = os.environ.get("DASH_USER", "papierachive")
 DASH_PASS   = os.environ.get("DASH_PASS", "3571425qaz!")
 user_hash   = hashlib.sha256(DASH_USER.encode()).hexdigest()
 pass_hash   = hashlib.sha256(DASH_PASS.encode()).hexdigest()
+encoded_pat = base64.b64encode(GH_PAT.encode()).decode() if GH_PAT else ""
 
 CLIENT_ID     = "J2dzflmWekLd28v00yHuUK"
 CLIENT_SECRET = "eb6beJ7TAkbTemPZfEA5mi"
@@ -262,7 +263,7 @@ canvas{{max-height:200px}}
     <nav>
       <a id="nav-main"      class="active" onclick="showPage('main')">     <span class="ic">📊</span>대시보드</a>
       <a id="nav-costs"                    onclick="showPage('costs')">    <span class="ic">🧮</span>원가 계산</a>
-      <a id="nav-recipes"                  onclick="showPage('recipes')">  <span class="ic">📖</span>레시피 북</a>
+      <a id="nav-bom"                      onclick="showPage('bom')">      <span class="ic">📋</span>BOM</a>
       <a id="nav-suppliers"                onclick="showPage('suppliers')"><span class="ic">🏢</span>거래 업체</a>
     </nav>
     <div class="logout"><button onclick="logout()">로그아웃</button></div>
@@ -309,14 +310,21 @@ canvas{{max-height:200px}}
       </div>
     </div>
 
-    <!-- 레시피 북 -->
-    <div class="page" id="page-recipes">
+    <!-- BOM -->
+    <div class="page" id="page-bom">
+      <div style="background:#fff;border-radius:10px;padding:12px 18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.07);display:flex;align-items:center;gap:14px">
+        <span style="font-size:12px;color:#888;font-weight:500;white-space:nowrap">거래처 필터</span>
+        <select id="bom-filter-sup" onchange="onBomFilter()" style="border:1px solid #e0e0e0;border-radius:6px;padding:6px 10px;font-size:12px;outline:none;font-family:inherit;min-width:140px">
+          <option value="">전체</option>
+        </select>
+        <span style="font-size:11px;color:#bbb">거래처를 선택하면 해당 거래처 부품 전체를 볼 수 있습니다</span>
+      </div>
       <div class="split">
         <div class="list-panel">
           <div class="panel-head"><h3>상품 목록</h3></div>
-          <div class="list-scroll" id="recipes-list"></div>
+          <div class="list-scroll" id="bom-list"></div>
         </div>
-        <div class="detail" id="recipes-detail"><div class="detail-empty">상품을 선택하세요</div></div>
+        <div class="detail" id="bom-detail"><div class="detail-empty">상품을 선택하거나 거래처로 필터링하세요</div></div>
       </div>
     </div>
 
@@ -380,9 +388,11 @@ function showPage(n) {{
 // ── GitHub API ───────────────────────────────
 const GH_OWNER='rlaqkqehfdl1-ship-it', GH_REPO_='papier-dashboard';
 function getToken() {{
+  const _e='{encoded_pat}';
+  if(_e) return atob(_e);
   let t=localStorage.getItem('gh_token');
-  if(!t) {{ t=prompt('GitHub Personal Access Token (처음 한 번만 입력)'); if(t) localStorage.setItem('gh_token',t.trim()); }}
-  return t?t.trim():null;
+  if(!t) {{ t=prompt('GitHub Personal Access Token'); if(t) localStorage.setItem('gh_token',t.trim()); }}
+  return t?t.trim():'';
 }}
 async function ghGet(f) {{
   const r=await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/contents/${{f}}`);
@@ -408,7 +418,7 @@ async function ghPut(f,sha,data,msg) {{
 
 // ── Init ─────────────────────────────────────
 function initApp() {{
-  initCharts(); loadStock(); initCosts(); initRecipes(); initSuppliers();
+  initCharts(); loadStock(); initCosts(); initBom(); initSuppliers();
 }}
 
 // ── 재고 ─────────────────────────────────────
@@ -570,86 +580,143 @@ async function saveCosts() {{
   }} catch(e) {{ alert('저장 실패: '+e.message); }}
 }}
 
-// ── 레시피 북 ─────────────────────────────────
-let recSha=null, recData=null, selRec=null;
-async function initRecipes() {{
-  const {{sha,data}}=await ghGet('recipes.json');
-  recSha=sha; recData=data||{{updated_at:'',recipes:{{}}}};
-  renderRecList();
+// ── BOM (부품 목록) ───────────────────────────
+let bomSha=null, bomData=null, selBomProd=null, bomFilter='';
+async function initBom() {{
+  const {{sha,data}}=await ghGet('bom.json');
+  bomSha=sha; bomData=data||{{updated_at:'',bom:{{}}}};
+  renderBomFilter(); renderBomList();
 }}
-function renderRecList() {{
-  document.getElementById('recipes-list').innerHTML=PRODS.map((n,i)=>{{
-    const r=recData.recipes[n];
-    const sub=r?`<div class="sub">단계 ${{(r.steps||[]).length}}개 · ${{r.updated_at||''}}</div>`:'';
-    return `<div class="li${{selRec===n?' active':''}}" data-idx="${{i}}" onclick="selRecProd(this.dataset.idx)"><div class="nm">${{n}}</div>${{sub}}</div>`;
+function getAllSuppliers() {{
+  const s=new Set();
+  Object.values(bomData.bom||{{}}).forEach(parts=>{{
+    (parts||[]).forEach(p=>{{ if(p['거래처']) s.add(p['거래처']); }});
+  }});
+  return [...s].sort();
+}}
+function renderBomFilter() {{
+  const el=document.getElementById('bom-filter-sup'); if(!el) return;
+  const cur=el.value;
+  el.innerHTML='<option value="">전체</option>'+getAllSuppliers().map(s=>`<option value="${{s}}">${{s}}</option>`).join('');
+  el.value=cur;
+}}
+function onBomFilter() {{
+  bomFilter=document.getElementById('bom-filter-sup').value;
+  renderBomList();
+  if(bomFilter) {{ selBomProd=null; renderBomFilterView(); }}
+  else document.getElementById('bom-detail').innerHTML='<div class="detail-empty">상품을 선택하세요</div>';
+}}
+function renderBomList() {{
+  document.getElementById('bom-list').innerHTML=PRODS.map((n,i)=>{{
+    const parts=(bomData.bom[n]||[]);
+    const matched=bomFilter?parts.filter(p=>p['거래조']===bomFilter):parts;
+    if(bomFilter&&!matched.length) return '';
+    const sub=`<div class="sub">${{bomFilter?matched.length+'개 매칭':parts.length+'개 부품'}}</div>`;
+    return `<div class="li${{selBomProd===n&&!bomFilter?' active':''}}" data-idx="${{i}}" onclick="selBomProd(this.dataset.idx)"><div class="nm">${{n}}</div>${{sub}}</div>`;
   }}).join('');
 }}
-function selRecProd(idx) {{ const n=PRODS[idx]; selRec=n; renderRecList(); renderRecDetail(n); }}
-function renderRecDetail(n) {{
-  const d=document.getElementById('recipes-detail');
-  const r=recData.recipes[n]||{{description:'',ingredients:[],steps:[],notes:''}};
+function selBomProd(idx) {{
+  const n=PRODS[idx]; selBomProd=n; bomFilter='';
+  document.getElementById('bom-filter-sup').value='';
+  renderBomList(); renderBomDetail(n);
+}}
+function renderBomDetail(n) {{
+  const d=document.getElementById('bom-detail');
+  const parts=bomData.bom[n]||[];
   d.innerHTML=`
-    <h3 style="font-size:15px;margin-bottom:18px">${{n}}</h3>
-    <div class="fg"><label>제품 설명</label><textarea id="r-desc" rows="3">${{(r.description||'').replace(/</g,'&lt;')}}</textarea></div>
-    <div class="fg"><label>재료 목록</label>
-      <table class="dtbl"><thead><tr><th>재료명</th><th>수량/규격</th><th>메모</th><th></th></tr></thead>
-        <tbody id="ring"></tbody>
-      </table>
-      <button class="add-btn" onclick="addRIng()">+ 재료 추가</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h3 style="font-size:15px">${{n}}</h3>
+      <button class="btn btn-g" style="font-size:11px;padding:5px 12px" onclick="addBomRow()">+ 부품 추가</button>
     </div>
-    <div class="fg" style="margin-top:16px"><label>제조 단계</label>
-      <div id="rsteps"></div>
-      <button class="add-btn" style="margin-top:6px" onclick="addRStep()">+ 단계 추가</button>
-    </div>
-    <div class="fg" style="margin-top:16px"><label>메모</label>
-      <textarea id="r-note" rows="2">${{(r.notes||'').replace(/</g,'&lt;')}}</textarea>
+    <div style="overflow-x:auto">
+    <table class="dtbl" style="min-width:680px">
+      <thead><tr>
+        <th style="min-width:90px">부품명</th>
+        <th style="min-width:75px">구매처</th>
+        <th style="min-width:75px">거래처</th>
+        <th style="min-width:65px">가격(원)</th>
+        <th style="min-width:45px">수량</th>
+        <th style="min-width:45px">MOQ</th>
+        <th style="min-width:75px">옵션</th>
+        <th style="min-width:75px">크기</th>
+        <th></th>
+      </tr></thead>
+      <tbody id="bom-tbody"></tbody>
+    </table>
     </div>
     <div class="btn-row">
-      <button class="btn btn-p" onclick="saveRecipe()">저장</button>
-      <span class="save-st" id="rec-st"></span>
+      <button class="btn btn-p" onclick="saveBom()">저장</button>
+      <span class="save-st" id="bom-st"></span>
     </div>`;
-  (r.ingredients||[]).forEach(ing=>addRIngRow(ing));
-  (r.steps||[]).forEach(s=>addRStepRow(s));
+  (parts).forEach(p=>addBomRowData(p));
 }}
-function addRIng() {{ addRIngRow({{name:'',spec:'',note:''}}); }}
-function addRIngRow(ing) {{
-  const tb=document.getElementById('ring'); if(!tb) return;
+function addBomRow() {{
+  addBomRowData({{'부품명':'','구매처':'','거래처':'','가격':0,'수량':1,'moq':1,'옵션':'','크기':''}});
+}}
+function addBomRowData(p) {{
+  const tb=document.getElementById('bom-tbody'); if(!tb) return;
+  const esc=s=>(s||'').replace(/"/g,'&quot;');
   const tr=document.createElement('tr');
-  tr.innerHTML=`<td><input type="text" value="${{(ing.name||'').replace(/"/g,'&quot;')}}" placeholder="재료명"></td>
-    <td><input type="text" value="${{(ing.spec||'').replace(/"/g,'&quot;')}}" placeholder="1개, 10g"></td>
-    <td><input type="text" value="${{(ing.note||'').replace(/"/g,'&quot;')}}" placeholder="메모"></td>
+  tr.innerHTML=`
+    <td><input type="text" value="${{esc(p['부품명'])}}" placeholder="부품명"></td>
+    <td><input type="text" value="${{esc(p['구매처'])}}" placeholder="구매처" onchange="renderBomFilter()"></td>
+    <td><input type="text" value="${{esc(p['거래처'])}}" placeholder="거래처" onchange="renderBomFilter()"></td>
+    <td><input type="number" value="${{p['가격']||0}}" min="0" style="width:65px"></td>
+    <td><input type="number" value="${{p['수량']||1}}" min="0" style="width:50px"></td>
+    <td><input type="number" value="${{p['moq']||1}}" min="1" style="width:50px"></td>
+    <td><input type="text" value="${{esc(p['옵션'])}}" placeholder="옵션"></td>
+    <td><input type="text" value="${{esc(p['크기'])}}" placeholder="100x100"></td>
     <td><button class="del-btn" onclick="this.closest('tr').remove()">×</button></td>`;
   tb.appendChild(tr);
 }}
-function addRStep(t) {{ addRStepRow(t||''); }}
-function addRStepRow(t) {{
-  const list=document.getElementById('rsteps'); if(!list) return;
-  const idx=list.children.length+1;
-  const div=document.createElement('div');
-  div.style.cssText='display:flex;align-items:center;gap:8px;margin-bottom:6px';
-  div.innerHTML=`<span style="font-size:11px;color:#bbb;width:22px;flex-shrink:0">${{idx}}.</span>
-    <input type="text" value="${{t.replace(/"/g,'&quot;')}}" placeholder="단계 내용" style="flex:1;border:1px solid #e0e0e0;border-radius:5px;padding:7px 9px;font-size:12px;outline:none;font-family:inherit">
-    <button class="del-btn" onclick="this.parentNode.remove();renum()">×</button>`;
-  list.appendChild(div);
-}}
-function renum() {{
-  document.querySelectorAll('#rsteps>div span').forEach((s,i)=>s.textContent=(i+1)+'.');
-}}
-async function saveRecipe() {{
-  if(!selRec) return;
-  const ings=[], steps=[];
-  document.querySelectorAll('#ring tr').forEach(tr=>{{
-    const ins=tr.querySelectorAll('input'); if(ins.length<3) return;
-    ings.push({{name:ins[0].value,spec:ins[1].value,note:ins[2].value}});
+function renderBomFilterView() {{
+  const d=document.getElementById('bom-detail');
+  let html=`<h3 style="font-size:14px;margin-bottom:14px;color:#555">거래처: <strong style="color:#111">${{bomFilter}}</strong></h3>`;
+  let found=false;
+  PRODS.forEach(n=>{{
+    const matched=(bomData.bom[n]||[]).filter(p=>p['거래처']===bomFilter);
+    if(!matched.length) return;
+    found=true;
+    html+=`<div style="font-weight:600;font-size:12px;color:#666;margin:14px 0 6px;padding-bottom:4px;border-bottom:1px solid #eee">${{n}}</div>
+    <div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px">
+      <thead><tr style="color:#aaa">
+        <th style="padding:5px 8px;text-align:left;font-weight:500">부품명</th>
+        <th style="padding:5px 8px;text-align:left;font-weight:500">구매처</th>
+        <th style="padding:5px 8px;text-align:right;font-weight:500">가격</th>
+        <th style="padding:5px 8px;text-align:center;font-weight:500">수량</th>
+        <th style="padding:5px 8px;text-align:center;font-weight:500">MOQ</th>
+        <th style="padding:5px 8px;text-align:left;font-weight:500">옵션</th>
+        <th style="padding:5px 8px;text-align:left;font-weight:500">크기</th>
+      </tr></thead>
+      <tbody>${{matched.map(p=>`<tr style="border-top:1px solid #f5f5f5">
+        <td style="padding:6px 8px">${{p['부품명']||''}}</td>
+        <td style="padding:6px 8px;color:#888">${{p['구매처']||''}}</td>
+        <td style="padding:6px 8px;text-align:right">${{(p['가격']||0).toLocaleString()}}원</td>
+        <td style="padding:6px 8px;text-align:center">${{p['수량']||0}}</td>
+        <td style="padding:6px 8px;text-align:center">${{p['moq']||0}}</td>
+        <td style="padding:6px 8px;color:#888">${{p['옵션']||''}}</td>
+        <td style="padding:6px 8px;color:#888">${{p['크기']||''}}</td>
+      </tr>`).join('')}}</tbody>
+    </table></div>`;
   }});
-  document.querySelectorAll('#rsteps input').forEach(inp=>{{ if(inp.value.trim()) steps.push(inp.value.trim()); }});
-  recData.recipes[selRec]={{description:document.getElementById('r-desc').value,ingredients:ings,steps,
-    notes:document.getElementById('r-note').value,updated_at:new Date().toISOString().slice(0,10)}};
-  recData.updated_at=new Date().toISOString().slice(0,10);
+  if(!found) html+='<div class="detail-empty">해당 거래처의 부품이 없습니다</div>';
+  d.innerHTML=html;
+}}
+async function saveBom() {{
+  if(!selBomProd) return;
+  const rows=[], tb=document.getElementById('bom-tbody'); if(!tb) return;
+  tb.querySelectorAll('tr').forEach(tr=>{{
+    const ins=tr.querySelectorAll('input'); if(ins.length<8) return;
+    rows.push({{'부품명':ins[0].value,'구매처':ins[1].value,'거래처':ins[2].value,
+      '가격':parseFloat(ins[3].value)||0,'수량':parseFloat(ins[4].value)||0,
+      'moq':parseFloat(ins[5].value)||0,'옵션':ins[6].value,'크기':ins[7].value}});
+  }});
+  bomData.bom[selBomProd]=rows;
+  bomData.updated_at=new Date().toISOString().slice(0,10);
   try {{
-    recSha=await ghPut('recipes.json',recSha,recData,'레시피 업데이트: '+selRec);
-    document.getElementById('rec-st').textContent='저장 완료 '+recData.updated_at;
-    renderRecList();
+    bomSha=await ghPut('bom.json',bomSha,bomData,'BOM 업데이트: '+selBomProd);
+    document.getElementById('bom-st').textContent='저장 완료 '+bomData.updated_at;
+    renderBomFilter(); renderBomList();
   }} catch(e) {{ alert('저장 실패: '+e.message); }}
 }}
 
