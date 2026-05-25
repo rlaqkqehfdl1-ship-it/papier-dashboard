@@ -586,6 +586,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "디어데코",
+      "contact": "",
+      "email": "",
+      "address": "온라인몰",
+      "note": "",
+      "materials": [
+        {
+          "name": "회전고리",
+          "spec": "",
+          "unit": "",
+          "unit_price": 475,
+          "moq": 2,
+          "option": "백금",
+          "purchase_source": "온라인몰",
+          "note": ""
+        }
+      ]
     }
   ]
 }
