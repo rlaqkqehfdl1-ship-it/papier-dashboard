@@ -657,8 +657,8 @@ function updCS() {{
     itemT+=sub;
     const el=tr.querySelector('.isum'); if(el) el.textContent=sub.toLocaleString()+'원';
   }});
-  const itEl=document.getElementById('items-total'); if(itEl) itEl.textContent=itemT.toLocaleString()+'원';
   const totCost=bomT+itemT;
+  const itEl=document.getElementById('items-total'); if(itEl) itEl.textContent=totCost.toLocaleString()+'원';
   const ship=parseFloat(document.getElementById('c-ship')?.value)||0;
   const cp=parseFloat(document.getElementById('c-cprice')?.value)||0;
   const p7=Math.round(cp*0.93), p10=Math.round(cp*0.9), p15=Math.round(cp*0.85), p20=Math.round(cp*0.8);
