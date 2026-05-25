@@ -634,6 +634,35 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "봄베이",
+      "contact": "",
+      "email": "",
+      "address": "동대문종합시장 B동 5051-1호",
+      "note": "",
+      "materials": [
+        {
+          "name": "480 키홀더",
+          "spec": "",
+          "unit": "",
+          "unit_price": 1080,
+          "moq": 50,
+          "option": "검정",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "480 열쇠",
+          "spec": "",
+          "unit": "",
+          "unit_price": 540,
+          "moq": 50,
+          "option": "검정",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
     }
   ]
 }
