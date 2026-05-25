@@ -219,6 +219,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "디비스토리",
+      "contact": "",
+      "email": "",
+      "address": "동대문종합시장 A동 5142~3호",
+      "note": "",
+      "materials": [
+        {
+          "name": "리본",
+          "spec": "",
+          "unit": "",
+          "unit_price": 400,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "",
+          "note": ""
+        }
+      ]
     }
   ]
 }
