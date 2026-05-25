@@ -197,7 +197,38 @@
       "consumer_price": 0
     },
     "유영 [流 映]": {
-      "materials": [],
+      "materials": [
+        {
+          "name": "물방울 개고리",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 800
+        },
+        {
+          "name": "미니 카라비너 참",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 800
+        },
+        {
+          "name": "하트 O링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 72
+        },
+        {
+          "name": "둥근 삼각 고리",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 290
+        },
+        {
+          "name": "하트 참 써지컬",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 2400
+        }
+      ],
       "items": [
         {
           "name": "지퍼백",
@@ -264,7 +295,7 @@
         }
       ],
       "shipping": 4000,
-      "consumer_price": 0
+      "consumer_price": 20900
     },
     "소호 [素 蝴]": {
       "materials": [],
