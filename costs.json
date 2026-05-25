@@ -454,7 +454,80 @@
       "consumer_price": 27000
     },
     "잔화 [殘 花]": {
-      "materials": [],
+      "materials": [
+        {
+          "name": "눈사람 고리",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 900
+        },
+        {
+          "name": "메인O링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 72
+        },
+        {
+          "name": "리본/나비 O링",
+          "qty": 3,
+          "unit": "개",
+          "unit_price": 11
+        },
+        {
+          "name": "리본/나비 9핀",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 20
+        },
+        {
+          "name": "리본",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 400
+        },
+        {
+          "name": "나비하트",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 1200
+        },
+        {
+          "name": "나비하트 O링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 8
+        },
+        {
+          "name": "121 열쇠",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 2200
+        },
+        {
+          "name": "발레슈즈",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 2312.37
+        },
+        {
+          "name": "발레슈즈 O링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 19
+        },
+        {
+          "name": "진주 체인",
+          "qty": 10,
+          "unit": "개",
+          "unit_price": 10
+        },
+        {
+          "name": "진주 체인 O링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 11
+        }
+      ],
       "items": [
         {
           "name": "지퍼백",
@@ -494,7 +567,7 @@
         {
           "name": "포장자재비",
           "supplier": "쿠팡",
-          "qty": 2,
+          "qty": 1,
           "unit_price": 67,
           "spec": "습자지, 크라프트지"
         },
@@ -521,7 +594,7 @@
         }
       ],
       "shipping": 4000,
-      "consumer_price": 0
+      "consumer_price": 31100
     },
     "중첩 [重 疊]": {
       "materials": [],
