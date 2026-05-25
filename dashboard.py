@@ -717,7 +717,7 @@ function renderPartSearch(q) {{
       const price=(m.unit_price||0).toLocaleString();
       html+=`<div class="mitem" onclick="addPartFromModal(${{si}},${{mi}})">
         <div class="mn">${{m.name||'(이름 없음)'}}</div>
-        <div class="ms">${{s.name||''}}${{m.spec?' · '+m.spec:''}}${{m.unit?' · '+m.unit:''}} · ${{price}}원</div>
+        <div class="ms">${{s.name||''}}${{m.option?' · '+m.option:''}}${{m.spec?' · '+m.spec:''}} · ${{price}}원${{m.moq>1?' · MOQ '+m.moq:''}}</div>
       </div>`;
     }});
   }});
@@ -729,8 +729,8 @@ function renderPartSearch(q) {{
 }}
 function addPartFromModal(si,mi) {{
   const s=supData.suppliers[si], m=s.materials[mi];
-  addBomRowData({{'부품명':m.name||'','구매처':s.name||'','거래처':s.name||'',
-    '가격':m.unit_price||0,'수량':1,'moq':1,'옵션':m.spec||'','크기':''}});
+  addBomRowData({{'부품명':m.name||'','구매처':m.purchase_source||'','거래처':s.name||'',
+    '가격':m.unit_price||0,'수량':1,'moq':m.moq||1,'옵션':m.option||'','크기':m.spec||''}});
   closePartModal();
 }}
 function addBomRowData(p) {{
@@ -834,7 +834,7 @@ function renderSupDetail(s,idx) {{
     </div>
     <div class="fg"><label>메모</label><textarea id="s-nt" rows="2">${{(s.note||'').replace(/</g,'&lt;')}}</textarea></div>
     <div class="fg" style="margin-top:16px"><label>자재 목록</label>
-      <table class="dtbl"><thead><tr><th>자재명</th><th>규격</th><th>단위</th><th style="width:80px">단가(원)</th><th style="width:110px">최근구매일</th><th>메모</th><th></th></tr></thead>
+      <table class="dtbl"><thead><tr><th>자재명</th><th style="min-width:60px">규격</th><th style="width:45px">단위</th><th style="width:80px">단가(원)</th><th style="width:55px">MOQ</th><th style="min-width:70px">옵션</th><th style="min-width:80px">구매처</th><th>메모</th><th></th></tr></thead>
         <tbody id="smat"></tbody>
       </table>
       <button class="add-btn" onclick="addSMat()">+ 자재 추가</button>
@@ -846,17 +846,20 @@ function renderSupDetail(s,idx) {{
     </div>`;
   (s.materials||[]).forEach(m=>addSMatRow(m));
 }}
-function addSMat() {{ addSMatRow({{name:'',spec:'',unit:'',unit_price:0,last_purchase:'',note:''}}); }}
+function addSMat() {{ addSMatRow({{name:'',spec:'',unit:'',unit_price:0,moq:1,option:'',purchase_source:'',note:''}}); }}
 function addSMatRow(m) {{
   const tb=document.getElementById('smat'); if(!tb) return;
+  const esc=s=>(s||'').replace(/"/g,'&quot;');
   const tr=document.createElement('tr');
   tr.innerHTML=`
-    <td><input type="text" value="${{(m.name||'').replace(/"/g,'&quot;')}}" placeholder="자재명"></td>
-    <td><input type="text" value="${{(m.spec||'').replace(/"/g,'&quot;')}}" placeholder="규격"></td>
-    <td><input type="text" value="${{(m.unit||'').replace(/"/g,'&quot;')}}" placeholder="단위" style="width:50px"></td>
-    <td><input type="number" value="${{m.unit_price||0}}" min="0"></td>
-    <td><input type="date" value="${{m.last_purchase||''}}"></td>
-    <td><input type="text" value="${{(m.note||'').replace(/"/g,'&quot;')}}" placeholder="메모"></td>
+    <td><input type="text" value="${{esc(m.name)}}" placeholder="자재명"></td>
+    <td><input type="text" value="${{esc(m.spec)}}" placeholder="규격/크기"></td>
+    <td><input type="text" value="${{esc(m.unit)}}" placeholder="단위" style="width:44px"></td>
+    <td><input type="number" value="${{m.unit_price||0}}" min="0" style="width:72px"></td>
+    <td><input type="number" value="${{m.moq||1}}" min="1" style="width:48px"></td>
+    <td><input type="text" value="${{esc(m.option)}}" placeholder="옵션"></td>
+    <td><input type="text" value="${{esc(m.purchase_source)}}" placeholder="구매처"></td>
+    <td><input type="text" value="${{esc(m.note)}}" placeholder="메모"></td>
     <td><button class="del-btn" onclick="this.closest('tr').remove()">×</button></td>`;
   tb.appendChild(tr);
 }}
@@ -865,9 +868,10 @@ async function saveSup(idx) {{
   if(!nm) {{ alert('업체명을 입력하세요.'); return; }}
   const mats=[];
   document.querySelectorAll('#smat tr').forEach(tr=>{{
-    const ins=tr.querySelectorAll('input'); if(ins.length<6) return;
+    const ins=tr.querySelectorAll('input'); if(ins.length<8) return;
     mats.push({{name:ins[0].value,spec:ins[1].value,unit:ins[2].value,
-      unit_price:parseFloat(ins[3].value)||0,last_purchase:ins[4].value,note:ins[5].value}});
+      unit_price:parseFloat(ins[3].value)||0,moq:parseFloat(ins[4].value)||1,
+      option:ins[5].value,purchase_source:ins[6].value,note:ins[7].value}});
   }});
   const sup={{name:nm,contact:document.getElementById('s-ct').value,email:document.getElementById('s-em').value,
     address:document.getElementById('s-ad').value,note:document.getElementById('s-nt').value,materials:mats}};
