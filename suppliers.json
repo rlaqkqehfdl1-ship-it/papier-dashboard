@@ -603,6 +603,16 @@
           "option": "백금",
           "purchase_source": "온라인몰",
           "note": ""
+        },
+        {
+          "name": "둥근 삼각 고리",
+          "spec": "",
+          "unit": "",
+          "unit_price": 290,
+          "moq": 50,
+          "option": "중형",
+          "purchase_source": "동대문종합시장",
+          "note": ""
         }
       ]
     }
