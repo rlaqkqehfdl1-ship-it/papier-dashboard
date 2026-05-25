@@ -1,443 +1,430 @@
 {
-    "updated_at":  "2026-05-25",
-    "products":  {
-                     "유실 [幽 室]":  {
-                                      "materials":  [
-
-                                                    ],
-                                      "labor":  0,
-                                      "other":  0,
-                                      "packaging":  0,
-                                      "items":  [
-                                                    {
-                                                        "name":  "지퍼백",
-                                                        "supplier":  "펠트친구(네이버)",
-                                                        "qty":  1,
-                                                        "unit_price":  140,
-                                                        "spec":  "90 x 130"
-                                                    },
-                                                    {
-                                                        "name":  "노루지",
-                                                        "supplier":  "구디패키지",
-                                                        "qty":  1,
-                                                        "unit_price":  73,
-                                                        "spec":  "115 x 150(11호)"
-                                                    },
-                                                    {
-                                                        "name":  "브랜드카드",
-                                                        "supplier":  "애즈랜드",
-                                                        "qty":  1,
-                                                        "unit_price":  28,
-                                                        "spec":  "50 x 50"
-                                                    },
-                                                    {
-                                                        "name":  "엽서",
-                                                        "supplier":  "애즈랜드",
-                                                        "qty":  1,
-                                                        "unit_price":  105,
-                                                        "spec":  "89 x 126"
-                                                    },
-                                                    {
-                                                        "name":  "택배박스",
-                                                        "supplier":  "상자세상",
-                                                        "qty":  1,
-                                                        "unit_price":  115,
-                                                        "spec":  "150 x 120 x 120"
-                                                    },
-                                                    {
-                                                        "name":  "포장자재비",
-                                                        "supplier":  "쿠팡",
-                                                        "qty":  2,
-                                                        "unit_price":  67,
-                                                        "spec":  "습자지, 크라프트지"
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    }
-                                                ]
-                                  },
-                     "흔적 [痕 迹]":  {
-                                      "materials":  [
-
-                                                    ],
-                                      "labor":  0,
-                                      "packaging":  0,
-                                      "other":  0,
-                                      "items":  [
-                                                    {
-                                                        "name":  "지퍼백",
-                                                        "supplier":  "펠트친구(네이버)",
-                                                        "qty":  1,
-                                                        "unit_price":  140,
-                                                        "spec":  "90 x 130"
-                                                    },
-                                                    {
-                                                        "name":  "노루지",
-                                                        "supplier":  "구디패키지",
-                                                        "qty":  1,
-                                                        "unit_price":  73,
-                                                        "spec":  "115 x 150(11호)"
-                                                    },
-                                                    {
-                                                        "name":  "브랜드카드",
-                                                        "supplier":  "애즈랜드",
-                                                        "qty":  1,
-                                                        "unit_price":  28,
-                                                        "spec":  "50 x 50"
-                                                    },
-                                                    {
-                                                        "name":  "엽서",
-                                                        "supplier":  "애즈랜드",
-                                                        "qty":  1,
-                                                        "unit_price":  105,
-                                                        "spec":  "89 x 126"
-                                                    },
-                                                    {
-                                                        "name":  "택배박스",
-                                                        "supplier":  "상자세상",
-                                                        "qty":  1,
-                                                        "unit_price":  115,
-                                                        "spec":  "150 x 120 x 120"
-                                                    },
-                                                    {
-                                                        "name":  "포장자재비",
-                                                        "supplier":  "쿠팡",
-                                                        "qty":  2,
-                                                        "unit_price":  67,
-                                                        "spec":  "습자지, 크라프트지"
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    }
-                                                ]
-                                  },
-                     "유영 [流 映]":  {
-                                      "materials":  [
-
-                                                    ],
-                                      "labor":  0,
-                                      "packaging":  0,
-                                      "other":  0,
-                                      "items":  [
-                                                    {
-                                                        "name":  "지퍼백",
-                                                        "supplier":  "펠트친구(네이버)",
-                                                        "qty":  1,
-                                                        "unit_price":  140,
-                                                        "spec":  "90 x 130"
-                                                    },
-                                                    {
-                                                        "name":  "노루지",
-                                                        "supplier":  "구디패키지",
-                                                        "qty":  1,
-                                                        "unit_price":  73,
-                                                        "spec":  "115 x 150(11호)"
-                                                    },
-                                                    {
-                                                        "name":  "브랜드카드",
-                                                        "supplier":  "애즈랜드",
-                                                        "qty":  1,
-                                                        "unit_price":  28,
-                                                        "spec":  "50 x 50"
-                                                    },
-                                                    {
-                                                        "name":  "엽서",
-                                                        "supplier":  "애즈랜드",
-                                                        "qty":  1,
-                                                        "unit_price":  105,
-                                                        "spec":  "89 x 126"
-                                                    },
-                                                    {
-                                                        "name":  "택배박스",
-                                                        "supplier":  "상자세상",
-                                                        "qty":  1,
-                                                        "unit_price":  115,
-                                                        "spec":  "150 x 120 x 120"
-                                                    },
-                                                    {
-                                                        "name":  "포장자재비",
-                                                        "supplier":  "쿠팡",
-                                                        "qty":  2,
-                                                        "unit_price":  67,
-                                                        "spec":  "습자지, 크라프트지"
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    }
-                                                ]
-                                  },
-                     "소호 [素 蝴]":  {
-                                      "materials":  [
-
-                                                    ],
-                                      "labor":  0,
-                                      "packaging":  0,
-                                      "other":  0,
-                                      "items":  [
-                                                    {
-                                                        "name":  "지퍼백",
-                                                        "supplier":  "펠트친구(네이버)",
-                                                        "qty":  1,
-                                                        "unit_price":  140,
-                                                        "spec":  "90 x 130"
-                                                    },
-                                                    {
-                                                        "name":  "노루지",
-                                                        "supplier":  "구디패키지",
-                                                        "qty":  1,
-                                                        "unit_price":  73,
-                                                        "spec":  "115 x 150(11호)"
-                                                    },
-                                                    {
-                                                        "name":  "브랜드카드",
-                                                        "supplier":  "애즈랜드",
-                                                        "qty":  1,
-                                                        "unit_price":  28,
-                                                        "spec":  "50 x 50"
-                                                    },
-                                                    {
-                                                        "name":  "엽서",
-                                                        "supplier":  "애즈랜드",
-                                                        "qty":  1,
-                                                        "unit_price":  105,
-                                                        "spec":  "89 x 126"
-                                                    },
-                                                    {
-                                                        "name":  "택배박스",
-                                                        "supplier":  "상자세상",
-                                                        "qty":  1,
-                                                        "unit_price":  115,
-                                                        "spec":  "150 x 120 x 120"
-                                                    },
-                                                    {
-                                                        "name":  "포장자재비",
-                                                        "supplier":  "쿠팡",
-                                                        "qty":  2,
-                                                        "unit_price":  67,
-                                                        "spec":  "습자지, 크라프트지"
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    }
-                                                ]
-                                  },
-                     "잔화 [殘 花]":  {
-                                      "materials":  [
-
-                                                    ],
-                                      "labor":  0,
-                                      "packaging":  0,
-                                      "other":  0,
-                                      "items":  [
-                                                    {
-                                                        "name":  "지퍼백",
-                                                        "supplier":  "펠트친구(네이버)",
-                                                        "qty":  1,
-                                                        "unit_price":  140,
-                                                        "spec":  "90 x 130"
-                                                    },
-                                                    {
-                                                        "name":  "노루지",
-                                                        "supplier":  "구디패키지",
-                                                        "qty":  1,
-                                                        "unit_price":  73,
-                                                        "spec":  "115 x 150(11호)"
-                                                    },
-                                                    {
-                                                        "name":  "브랜드카드",
-                                                        "supplier":  "애즈랜드",
-                                                        "qty":  1,
-                                                        "unit_price":  28,
-                                                        "spec":  "50 x 50"
-                                                    },
-                                                    {
-                                                        "name":  "엽서",
-                                                        "supplier":  "애즈랜드",
-                                                        "qty":  1,
-                                                        "unit_price":  105,
-                                                        "spec":  "89 x 126"
-                                                    },
-                                                    {
-                                                        "name":  "택배박스",
-                                                        "supplier":  "상자세상",
-                                                        "qty":  1,
-                                                        "unit_price":  115,
-                                                        "spec":  "150 x 120 x 120"
-                                                    },
-                                                    {
-                                                        "name":  "포장자재비",
-                                                        "supplier":  "쿠팡",
-                                                        "qty":  2,
-                                                        "unit_price":  67,
-                                                        "spec":  "습자지, 크라프트지"
-                                                    },
-                                                    {
-                                                        "name":  "수입예비비",
-                                                        "supplier":  "타배",
-                                                        "qty":  1,
-                                                        "unit_price":  443,
-                                                        "spec":  "관세+부가세+배송비+관세사수수료"
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    }
-                                                ]
-                                  },
-                     "중첩 [重 疊]":  {
-                                      "materials":  [
-
-                                                    ],
-                                      "labor":  0,
-                                      "packaging":  0,
-                                      "other":  0,
-                                      "items":  [
-                                                    {
-                                                        "name":  "지퍼백",
-                                                        "supplier":  "펠트친구(네이버)",
-                                                        "qty":  1,
-                                                        "unit_price":  140,
-                                                        "spec":  "90 x 130"
-                                                    },
-                                                    {
-                                                        "name":  "노루지",
-                                                        "supplier":  "구디패키지",
-                                                        "qty":  1,
-                                                        "unit_price":  73,
-                                                        "spec":  "115 x 150(11호)"
-                                                    },
-                                                    {
-                                                        "name":  "브랜드카드",
-                                                        "supplier":  "애즈랜드",
-                                                        "qty":  1,
-                                                        "unit_price":  28,
-                                                        "spec":  "50 x 50"
-                                                    },
-                                                    {
-                                                        "name":  "엽서",
-                                                        "supplier":  "애즈랜드",
-                                                        "qty":  1,
-                                                        "unit_price":  105,
-                                                        "spec":  "89 x 126"
-                                                    },
-                                                    {
-                                                        "name":  "택배박스",
-                                                        "supplier":  "상자세상",
-                                                        "qty":  1,
-                                                        "unit_price":  115,
-                                                        "spec":  "150 x 120 x 120"
-                                                    },
-                                                    {
-                                                        "name":  "포장자재비",
-                                                        "supplier":  "쿠팡",
-                                                        "qty":  2,
-                                                        "unit_price":  67,
-                                                        "spec":  "습자지, 크라프트지"
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    },
-                                                    {
-                                                        "name":  "",
-                                                        "supplier":  "",
-                                                        "qty":  0,
-                                                        "unit_price":  0,
-                                                        "spec":  ""
-                                                    }
-                                                ]
-                                  }
-                 }
+  "updated_at": "2026-05-25",
+  "products": {
+    "유실 [幽 室]": {
+      "materials": [],
+      "items": [
+        {
+          "name": "지퍼백",
+          "supplier": "펠트친구(네이버)",
+          "qty": 1,
+          "unit_price": 140,
+          "spec": "90 x 130"
+        },
+        {
+          "name": "노루지",
+          "supplier": "구디패키지",
+          "qty": 1,
+          "unit_price": 73,
+          "spec": "115 x 150(11호)"
+        },
+        {
+          "name": "브랜드카드",
+          "supplier": "애즈랜드",
+          "qty": 1,
+          "unit_price": 28,
+          "spec": "50 x 50"
+        },
+        {
+          "name": "엽서",
+          "supplier": "애즈랜드",
+          "qty": 1,
+          "unit_price": 105,
+          "spec": "89 x 126"
+        },
+        {
+          "name": "택배박스",
+          "supplier": "상자세상",
+          "qty": 1,
+          "unit_price": 115,
+          "spec": "150 x 120 x 120"
+        },
+        {
+          "name": "포장자재비",
+          "supplier": "쿠팡",
+          "qty": 2,
+          "unit_price": 67,
+          "spec": "습자지, 크라프트지"
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        }
+      ],
+      "shipping": 4000,
+      "consumer_price": 0
+    },
+    "흔적 [痕 迹]": {
+      "materials": [],
+      "labor": 0,
+      "packaging": 0,
+      "other": 0,
+      "items": [
+        {
+          "name": "지퍼백",
+          "supplier": "펠트친구(네이버)",
+          "qty": 1,
+          "unit_price": 140,
+          "spec": "90 x 130"
+        },
+        {
+          "name": "노루지",
+          "supplier": "구디패키지",
+          "qty": 1,
+          "unit_price": 73,
+          "spec": "115 x 150(11호)"
+        },
+        {
+          "name": "브랜드카드",
+          "supplier": "애즈랜드",
+          "qty": 1,
+          "unit_price": 28,
+          "spec": "50 x 50"
+        },
+        {
+          "name": "엽서",
+          "supplier": "애즈랜드",
+          "qty": 1,
+          "unit_price": 105,
+          "spec": "89 x 126"
+        },
+        {
+          "name": "택배박스",
+          "supplier": "상자세상",
+          "qty": 1,
+          "unit_price": 115,
+          "spec": "150 x 120 x 120"
+        },
+        {
+          "name": "포장자재비",
+          "supplier": "쿠팡",
+          "qty": 2,
+          "unit_price": 67,
+          "spec": "습자지, 크라프트지"
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        }
+      ]
+    },
+    "유영 [流 映]": {
+      "materials": [],
+      "labor": 0,
+      "packaging": 0,
+      "other": 0,
+      "items": [
+        {
+          "name": "지퍼백",
+          "supplier": "펠트친구(네이버)",
+          "qty": 1,
+          "unit_price": 140,
+          "spec": "90 x 130"
+        },
+        {
+          "name": "노루지",
+          "supplier": "구디패키지",
+          "qty": 1,
+          "unit_price": 73,
+          "spec": "115 x 150(11호)"
+        },
+        {
+          "name": "브랜드카드",
+          "supplier": "애즈랜드",
+          "qty": 1,
+          "unit_price": 28,
+          "spec": "50 x 50"
+        },
+        {
+          "name": "엽서",
+          "supplier": "애즈랜드",
+          "qty": 1,
+          "unit_price": 105,
+          "spec": "89 x 126"
+        },
+        {
+          "name": "택배박스",
+          "supplier": "상자세상",
+          "qty": 1,
+          "unit_price": 115,
+          "spec": "150 x 120 x 120"
+        },
+        {
+          "name": "포장자재비",
+          "supplier": "쿠팡",
+          "qty": 2,
+          "unit_price": 67,
+          "spec": "습자지, 크라프트지"
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        }
+      ]
+    },
+    "소호 [素 蝴]": {
+      "materials": [],
+      "labor": 0,
+      "packaging": 0,
+      "other": 0,
+      "items": [
+        {
+          "name": "지퍼백",
+          "supplier": "펠트친구(네이버)",
+          "qty": 1,
+          "unit_price": 140,
+          "spec": "90 x 130"
+        },
+        {
+          "name": "노루지",
+          "supplier": "구디패키지",
+          "qty": 1,
+          "unit_price": 73,
+          "spec": "115 x 150(11호)"
+        },
+        {
+          "name": "브랜드카드",
+          "supplier": "애즈랜드",
+          "qty": 1,
+          "unit_price": 28,
+          "spec": "50 x 50"
+        },
+        {
+          "name": "엽서",
+          "supplier": "애즈랜드",
+          "qty": 1,
+          "unit_price": 105,
+          "spec": "89 x 126"
+        },
+        {
+          "name": "택배박스",
+          "supplier": "상자세상",
+          "qty": 1,
+          "unit_price": 115,
+          "spec": "150 x 120 x 120"
+        },
+        {
+          "name": "포장자재비",
+          "supplier": "쿠팡",
+          "qty": 2,
+          "unit_price": 67,
+          "spec": "습자지, 크라프트지"
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        }
+      ]
+    },
+    "잔화 [殘 花]": {
+      "materials": [],
+      "labor": 0,
+      "packaging": 0,
+      "other": 0,
+      "items": [
+        {
+          "name": "지퍼백",
+          "supplier": "펠트친구(네이버)",
+          "qty": 1,
+          "unit_price": 140,
+          "spec": "90 x 130"
+        },
+        {
+          "name": "노루지",
+          "supplier": "구디패키지",
+          "qty": 1,
+          "unit_price": 73,
+          "spec": "115 x 150(11호)"
+        },
+        {
+          "name": "브랜드카드",
+          "supplier": "애즈랜드",
+          "qty": 1,
+          "unit_price": 28,
+          "spec": "50 x 50"
+        },
+        {
+          "name": "엽서",
+          "supplier": "애즈랜드",
+          "qty": 1,
+          "unit_price": 105,
+          "spec": "89 x 126"
+        },
+        {
+          "name": "택배박스",
+          "supplier": "상자세상",
+          "qty": 1,
+          "unit_price": 115,
+          "spec": "150 x 120 x 120"
+        },
+        {
+          "name": "포장자재비",
+          "supplier": "쿠팡",
+          "qty": 2,
+          "unit_price": 67,
+          "spec": "습자지, 크라프트지"
+        },
+        {
+          "name": "수입예비비",
+          "supplier": "타배",
+          "qty": 1,
+          "unit_price": 443,
+          "spec": "관세+부가세+배송비+관세사수수료"
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        }
+      ]
+    },
+    "중첩 [重 疊]": {
+      "materials": [],
+      "labor": 0,
+      "packaging": 0,
+      "other": 0,
+      "items": [
+        {
+          "name": "지퍼백",
+          "supplier": "펠트친구(네이버)",
+          "qty": 1,
+          "unit_price": 140,
+          "spec": "90 x 130"
+        },
+        {
+          "name": "노루지",
+          "supplier": "구디패키지",
+          "qty": 1,
+          "unit_price": 73,
+          "spec": "115 x 150(11호)"
+        },
+        {
+          "name": "브랜드카드",
+          "supplier": "애즈랜드",
+          "qty": 1,
+          "unit_price": 28,
+          "spec": "50 x 50"
+        },
+        {
+          "name": "엽서",
+          "supplier": "애즈랜드",
+          "qty": 1,
+          "unit_price": 105,
+          "spec": "89 x 126"
+        },
+        {
+          "name": "택배박스",
+          "supplier": "상자세상",
+          "qty": 1,
+          "unit_price": 115,
+          "spec": "150 x 120 x 120"
+        },
+        {
+          "name": "포장자재비",
+          "supplier": "쿠팡",
+          "qty": 2,
+          "unit_price": 67,
+          "spec": "습자지, 크라프트지"
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        }
+      ]
+    }
+  }
 }
