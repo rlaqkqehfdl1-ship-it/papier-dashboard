@@ -548,6 +548,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "Hangzhou Jiusi Import And Export Co,.Ltd.",
+      "contact": "",
+      "email": "",
+      "address": "알리바바",
+      "note": "",
+      "materials": [
+        {
+          "name": "립밤 케이스",
+          "spec": "",
+          "unit": "",
+          "unit_price": 1116.54,
+          "moq": 100,
+          "option": "블랙",
+          "purchase_source": "알리바바",
+          "note": ""
+        }
+      ]
     }
   ]
 }
