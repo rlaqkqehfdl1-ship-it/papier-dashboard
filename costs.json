@@ -203,8 +203,8 @@
           "name": "지퍼백",
           "supplier": "펠트친구(네이버)",
           "qty": 1,
-          "unit_price": 140,
-          "spec": "90 x 130"
+          "unit_price": 110,
+          "spec": "75 x 110"
         },
         {
           "name": "노루지",
@@ -238,7 +238,7 @@
           "name": "포장자재비",
           "supplier": "쿠팡",
           "qty": 2,
-          "unit_price": 67,
+          "unit_price": 38,
           "spec": "습자지, 크라프트지"
         },
         {
