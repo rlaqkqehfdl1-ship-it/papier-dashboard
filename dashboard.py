@@ -70,6 +70,21 @@ orders_today  = [o for o in orders_month if o["order_date"][:10] == today]
 orders_all    = get_all_orders(all_start, today)
 products      = get("/products", limit=100).get("products", [])
 
+# 옵션별 재고 수집
+real_products = [p for p in products if float(p.get("price", "0")) > 0]
+all_variants  = []
+for p in real_products:
+    for v in get(f"/products/{p['product_no']}/variants").get("variants", []):
+        opt = " / ".join(o["value"] for o in v.get("options", []) if o.get("value") and o["value"] != "N")
+        qty = int(v.get("stock_quantity") or 0)
+        all_variants.append({
+            "product_name": p["product_name"],
+            "product_no":   p["product_no"],
+            "variant_code": v["variant_code"],
+            "option":       opt or "단품",
+            "qty":          qty,
+        })
+
 # ── 집계 ─────────────────────────────────────
 total_month  = sum(float(o["actual_order_amount"]["order_price_amount"]) for o in orders_month)
 total_today  = sum(float(o["actual_order_amount"]["order_price_amount"]) for o in orders_today)
@@ -94,8 +109,7 @@ for o in orders_month:
     daily_sales[day] += float(o["actual_order_amount"]["order_price_amount"])
 daily_sorted = sorted(daily_sales.items())
 
-real_products = [p for p in products if float(p.get("price","0")) > 0]
-low_stock     = [p for p in real_products if int(p.get("stock_quantity") or 0) <= 5]
+low_stock     = [v for v in all_variants if v["qty"] <= 5]
 
 # ── HTML 생성 ─────────────────────────────────
 now_str = datetime.now().strftime("%Y년 %m월 %d일 %H:%M 기준") + " · 매일 오전 10시 자동 갱신"
@@ -109,10 +123,19 @@ best_labels = json.dumps([b[0] for b in bestsellers])
 best_vals   = json.dumps([b[1] for b in bestsellers])
 
 stock_rows = ""
-for p in real_products:
-    qty = int(p.get("stock_quantity") or 0)
-    badge = f'<span class="badge {"badge-danger" if qty <= 5 else "badge-ok"}">{"위험" if qty <= 5 else "정상"}</span>'
-    stock_rows += f'<tr><td>{p["product_name"]}</td><td>{int(float(p["price"])):,}원</td><td>{qty}개</td><td>{badge}</td></tr>'
+prev_product = None
+for v in sorted(all_variants, key=lambda x: x["product_name"]):
+    show_name = v["product_name"] if v["product_name"] != prev_product else ""
+    prev_product = v["product_name"]
+    qty = v["qty"]
+    if qty == 0:
+        badge = '<span class="badge badge-out">품절</span>'
+    elif qty <= 5:
+        badge = '<span class="badge badge-danger">부족</span>'
+    else:
+        badge = '<span class="badge badge-ok">정상</span>'
+    name_cell = f'<td class="product-name-cell">{show_name}</td>' if show_name else '<td></td>'
+    stock_rows += f'<tr>{name_cell}<td class="opt-cell">{v["option"]}</td><td>{qty}개</td><td>{badge}</td></tr>'
 
 status_rows = "".join(f'<div class="stat-chip"><span>{k}</span><strong>{v}건</strong></div>' for k,v in status_count.items())
 best_rows   = "".join(f'<li><span class="rank">{i+1}</span><span class="pname">{b[0]}</span><span class="qty">{b[1]}개</span></li>' for i,b in enumerate(bestsellers))
@@ -158,6 +181,9 @@ html = f"""<!DOCTYPE html>
   .badge{{font-size:11px;padding:3px 8px;border-radius:20px;font-weight:600}}
   .badge-danger{{background:#fff0f0;color:#e53}}
   .badge-ok{{background:#f0fff4;color:#2a7}}
+  .badge-out{{background:#f0f0f0;color:#999}}
+  .product-name-cell{{font-weight:600;padding-top:14px}}
+  .opt-cell{{color:#666;font-size:12px}}
   canvas{{max-height:220px}}
 </style>
 </head>
@@ -195,7 +221,7 @@ html = f"""<!DOCTYPE html>
     </div>
     <div class="card">
       <h2>상품별 재고 현황</h2>
-      <table><thead><tr><th>상품명</th><th>가격</th><th>재고</th><th>상태</th></tr></thead>
+      <table><thead><tr><th>상품명</th><th>옵션</th><th>재고</th><th>상태</th></tr></thead>
       <tbody>{stock_rows}</tbody></table>
     </div>
   </div>
