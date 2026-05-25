@@ -453,6 +453,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "푸푸상점",
+      "contact": "",
+      "email": "",
+      "address": "온라인몰",
+      "note": "",
+      "materials": [
+        {
+          "name": "투명 아크릴",
+          "spec": "",
+          "unit": "",
+          "unit_price": 632,
+          "moq": 50,
+          "option": "가로세로 80mm이하",
+          "purchase_source": "온라인몰",
+          "note": ""
+        }
+      ]
     }
   ]
 }
