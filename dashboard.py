@@ -553,11 +553,10 @@ function renderCostDetail(n) {{
         <input type="text" value="${{pr.toLocaleString()}}원" disabled style="background:#f8f8f8;color:#999">
       </div><div></div>
     </div>
-    <div class="fg"><label>재료비</label>
-      <table class="dtbl"><thead><tr><th>재료명</th><th style="width:60px">수량</th><th style="width:50px">단위</th><th style="width:90px">단가(원)</th><th style="width:80px">합계</th><th></th></tr></thead>
+    <div class="fg"><label>재료비 <span style="font-size:10px;color:#bbb;font-weight:400">· BOM 탭에서 수정하세요</span></label>
+      <table class="dtbl"><thead><tr><th>재료명</th><th style="width:60px">수량</th><th style="width:50px">단위</th><th style="width:90px">단가(원)</th><th style="width:80px">합계</th></tr></thead>
         <tbody id="cmat"></tbody>
       </table>
-      <button class="add-btn" onclick="addCMat()">+ 재료 추가</button>
     </div>
     <div class="frow c3" style="margin-bottom:12px">
       <div class="fg"><label>인건비 (원/개)</label><input type="number" id="c-lab" value="${{c.labor||0}}" min="0" onchange="updCS()"></div>
@@ -572,27 +571,25 @@ function renderCostDetail(n) {{
   (c.materials||[]).forEach(m=>addCMatRow(m));
   updCS();
 }}
-function addCMat() {{ addCMatRow({{name:'',qty:1,unit:'개',unit_price:0}}); updCS(); }}
 function addCMatRow(m) {{
   const tb=document.getElementById('cmat'); if(!tb) return;
   const tr=document.createElement('tr');
+  tr.dataset.name=m.name||''; tr.dataset.qty=m.qty||0;
+  tr.dataset.unit=m.unit||'개'; tr.dataset.price=m.unit_price||0;
+  const sub=Math.round((m.qty||0)*(m.unit_price||0));
   tr.innerHTML=`
-    <td><input type="text" value="${{(m.name||'').replace(/"/g,'&quot;')}}" placeholder="재료명" onchange="updCS()"></td>
-    <td><input type="number" value="${{m.qty||1}}" min="0" step="0.01" onchange="updCS()"></td>
-    <td><input type="text" value="${{(m.unit||'개').replace(/"/g,'&quot;')}}" onchange="updCS()"></td>
-    <td><input type="number" value="${{m.unit_price||0}}" min="0" onchange="updCS()"></td>
-    <td class="csub" style="font-size:11px;color:#aaa;padding:0 6px;white-space:nowrap">${{Math.round((m.qty||1)*(m.unit_price||0)).toLocaleString()}}원</td>
-    <td><button class="del-btn" onclick="this.closest('tr').remove();updCS()">×</button></td>`;
+    <td style="padding:5px 6px;font-size:12px">${{m.name||''}}</td>
+    <td style="padding:5px 6px;font-size:12px;text-align:center">${{m.qty||0}}</td>
+    <td style="padding:5px 6px;font-size:12px;text-align:center">${{m.unit||'개'}}</td>
+    <td style="padding:5px 6px;font-size:12px;text-align:right">${{(m.unit_price||0).toLocaleString()}}</td>
+    <td style="padding:5px 6px;font-size:11px;color:#aaa;text-align:right">${{sub.toLocaleString()}}원</td>`;
   tb.appendChild(tr);
 }}
 function updCS() {{
   const tb=document.getElementById('cmat'); if(!tb) return;
   let mt=0;
   tb.querySelectorAll('tr').forEach(tr=>{{
-    const ins=tr.querySelectorAll('input'); if(ins.length<4) return;
-    const sub=Math.round((parseFloat(ins[1].value)||0)*(parseFloat(ins[3].value)||0));
-    mt+=sub;
-    const el=tr.querySelector('.csub'); if(el) el.textContent=sub.toLocaleString()+'원';
+    mt+=Math.round((parseFloat(tr.dataset.qty)||0)*(parseFloat(tr.dataset.price)||0));
   }});
   const lab=parseFloat(document.getElementById('c-lab')?.value)||0;
   const pkg=parseFloat(document.getElementById('c-pkg')?.value)||0;
@@ -611,10 +608,10 @@ function updCS() {{
 }}
 async function saveCosts() {{
   if(!selCost) return;
-  const tb=document.getElementById('cmat'), mats=[];
-  tb.querySelectorAll('tr').forEach(tr=>{{
-    const ins=tr.querySelectorAll('input'); if(ins.length<4) return;
-    mats.push({{name:ins[0].value,qty:parseFloat(ins[1].value)||0,unit:ins[2].value,unit_price:parseFloat(ins[3].value)||0}});
+  const mats=[];
+  document.querySelectorAll('#cmat tr').forEach(tr=>{{
+    mats.push({{name:tr.dataset.name||'',qty:parseFloat(tr.dataset.qty)||0,
+      unit:tr.dataset.unit||'개',unit_price:parseFloat(tr.dataset.price)||0}});
   }});
   costData.products[selCost]={{materials:mats,labor:parseFloat(document.getElementById('c-lab').value)||0,
     packaging:parseFloat(document.getElementById('c-pkg').value)||0,other:parseFloat(document.getElementById('c-oth').value)||0}};
