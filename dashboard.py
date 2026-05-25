@@ -62,7 +62,7 @@ def get_all_orders(start_date, end_date, embed=None):
 # ── 데이터 수집 ──────────────────────────────
 today       = datetime.now().strftime("%Y-%m-%d")
 month_start = datetime.now().strftime("%Y-%m-01")
-all_start   = "2015-01-01"
+all_start   = "2026-04-17"  # 쇼핑몰 오픈일
 
 print("데이터 수집 중...")
 orders_month  = get_all_orders(month_start, today, embed="items")
