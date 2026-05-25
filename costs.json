@@ -597,7 +597,80 @@
       "consumer_price": 31100
     },
     "중첩 [重 疊]": {
-      "materials": [],
+      "materials": [
+        {
+          "name": "카라비너",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 1500
+        },
+        {
+          "name": "투링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 300
+        },
+        {
+          "name": "삼각 카라비너",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 900
+        },
+        {
+          "name": "병따개 카라비너(써)",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 1800
+        },
+        {
+          "name": "아크릴 연결 클립",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 453
+        },
+        {
+          "name": "블랙 아크릴",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 2900
+        },
+        {
+          "name": "대형 O링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 72
+        },
+        {
+          "name": "총알/피크 연결 O링",
+          "qty": 2,
+          "unit": "개",
+          "unit_price": 19
+        },
+        {
+          "name": "기타 피크",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 1600
+        },
+        {
+          "name": "총알 체인",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 30
+        },
+        {
+          "name": "총알 O링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 8
+        },
+        {
+          "name": "나비총알",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 2200
+        }
+      ],
       "items": [
         {
           "name": "지퍼백",
@@ -637,7 +710,7 @@
         {
           "name": "포장자재비",
           "supplier": "쿠팡",
-          "qty": 2,
+          "qty": 1,
           "unit_price": 67,
           "spec": "습자지, 크라프트지"
         },
@@ -664,7 +737,7 @@
         }
       ],
       "shipping": 4000,
-      "consumer_price": 0
+      "consumer_price": 37500
     }
   }
 }
