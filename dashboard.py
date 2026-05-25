@@ -450,14 +450,10 @@ canvas{{max-height:200px}}
       </div>
     </div>
 
-  </div>
-</div>
-</div>
-
-<!-- 일정 -->
-    <div class="page" id="page-schedule" style="padding:6px 40px 24px">
+    <!-- 일정 -->
+    <div class="page" id="page-schedule" style="padding:6px 24px 24px">
       <div class="cal-wrap">
-        <div style="background:#fff;border-radius:10px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.07)">
+        <div style="background:#fff;border-radius:10px;padding:20px 24px;box-shadow:0 1px 3px rgba(0,0,0,.07)">
           <div class="cal-header">
             <button class="cal-nav" onclick="calMove(-1)">&#8249;</button>
             <h2 id="cal-title"></h2>
@@ -474,6 +470,10 @@ canvas{{max-height:200px}}
         </div>
       </div>
     </div>
+
+  </div>
+</div>
+</div>
 
 <!-- 일정 추가 모달 -->
 <div id="sch-modal" class="modal-bg" onclick="if(event.target===this)closeSchModal()" style="display:none">
