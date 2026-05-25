@@ -555,7 +555,7 @@ function renderCostDetail(n) {{
       <td style="width:18px;text-align:center;color:#ccc;font-size:10px;padding:2px 3px">${{i+2}}</td>
       <td><input type="text" value="${{(it.name||'').replace(/"/g,'&quot;')}}" placeholder="항목명" oninput="updCS()"></td>
       <td><input type="text" value="${{(it.supplier||'').replace(/"/g,'&quot;')}}" placeholder="업체명" oninput="updCS()"></td>
-      <td><input type="number" value="${{it.qty||0}}" min="0" step="0.01" style="width:52px" oninput="updCS()"></td>
+      <td><input type="number" value="${{it.qty||0}}" min="0" step="1" style="width:52px" oninput="updCS()"></td>
       <td><input type="number" value="${{it.unit_price||0}}" min="0" style="width:68px" oninput="updCS()"></td>
       <td><input type="text" value="${{(it.spec||'').replace(/"/g,'&quot;')}}" placeholder="사양" oninput="updCS()"></td>
       <td class="isum" style="text-align:right;font-size:11px;color:#aaa;padding:2px 6px;white-space:nowrap">0원</td>
