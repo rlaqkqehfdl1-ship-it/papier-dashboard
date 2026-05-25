@@ -2,7 +2,62 @@
   "updated_at": "2026-05-25",
   "products": {
     "유실 [幽 室]": {
-      "materials": [],
+      "materials": [
+        {
+          "name": "개고리",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 800
+        },
+        {
+          "name": "메인 투링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 300
+        },
+        {
+          "name": "O링",
+          "qty": 3,
+          "unit": "개",
+          "unit_price": 72
+        },
+        {
+          "name": "미니참 O링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 8
+        },
+        {
+          "name": "미니참",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 250
+        },
+        {
+          "name": "키홀더 O링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 25
+        },
+        {
+          "name": "480 키홀더",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 1080
+        },
+        {
+          "name": "열쇠 O링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 19
+        },
+        {
+          "name": "480 열쇠",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 540
+        }
+      ],
       "items": [
         {
           "name": "지퍼백",
@@ -69,7 +124,7 @@
         }
       ],
       "shipping": 4000,
-      "consumer_price": 0
+      "consumer_price": 3833
     },
     "흔적 [痕 迹]": {
       "materials": [],
