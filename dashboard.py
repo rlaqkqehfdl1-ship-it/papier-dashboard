@@ -608,9 +608,8 @@ function renderCostDetail(n) {{
           </div>
         </div>
         <div style="border-top:1px solid #e8e8e8;padding-top:7px">
-          <div style="font-size:10px;color:#999;margin-bottom:3px;font-weight:500">소비자가 (원)</div>
-          <input type="number" id="c-cprice" value="${{c.consumer_price||0}}" min="0" oninput="updCS()"
-            style="width:100%;border:1px solid #e0e0e0;border-radius:5px;padding:5px 8px;font-size:12px;outline:none;font-family:inherit">
+          <div style="font-size:10px;color:#999;margin-bottom:3px;font-weight:500">소비자가 (원) <span style="font-size:9px;color:#bbb">· 항목 합산 자동</span></div>
+          <div id="c-cprice" style="width:100%;border:1px solid #e8e8e8;border-radius:5px;padding:5px 8px;font-size:12px;background:#f5f5f5;color:#333;font-weight:600;text-align:right;box-sizing:border-box">0원</div>
         </div>
         <div style="border-top:1px solid #e8e8e8;padding-top:7px">
           <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px"><span style="color:#555">상시 7% 할인가</span><span id="c-p7" style="font-weight:500">0원</span></div>
@@ -660,7 +659,8 @@ function updCS() {{
   const itEl=document.getElementById('items-total'); if(itEl) itEl.textContent=itemT.toLocaleString()+'원';
   const totCost=bomT+itemT;
   const ship=parseFloat(document.getElementById('c-ship')?.value)||0;
-  const cp=parseFloat(document.getElementById('c-cprice')?.value)||0;
+  const cp=totCost;
+  const cpEl=document.getElementById('c-cprice'); if(cpEl) cpEl.textContent=totCost.toLocaleString()+'원';
   const p7=Math.round(cp*0.93), p10=Math.round(cp*0.9), p15=Math.round(cp*0.85), p20=Math.round(cp*0.8);
   const fee7=Math.round(p7*0.019), fee15=Math.round(p10*0.019);
   const cr=p7>0?((totCost+ship+fee7)/p7*100).toFixed(1):'0';
@@ -694,9 +694,12 @@ async function saveCosts() {{
     items.push({{name:ins[0].value,supplier:ins[1].value,
       qty:parseFloat(ins[2].value)||0,unit_price:parseFloat(ins[3].value)||0,spec:ins[4].value}});
   }});
+  let totC=0;
+  mats.forEach(m=>{{totC+=Math.round((m.qty||0)*(m.unit_price||0));}});
+  items.forEach(it=>{{totC+=Math.round((it.qty||0)*(it.unit_price||0));}});
   costData.products[selCost]={{materials:mats,items:items,
     shipping:parseFloat(document.getElementById('c-ship').value)||0,
-    consumer_price:parseFloat(document.getElementById('c-cprice').value)||0}};
+    consumer_price:totC}};
   costData.updated_at=new Date().toISOString().slice(0,10);
   const st=document.getElementById('cost-st'); st.textContent='저장 중...';
   try {{
