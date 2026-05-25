@@ -1,6 +1,9 @@
-import requests, json, base64
+import requests, json, base64, os
 from datetime import datetime, timedelta
 from collections import defaultdict
+
+GH_PAT      = os.environ.get("GH_PAT", "")
+GH_REPO     = os.environ.get("GH_REPO", "rlaqkqehfdl1-ship-it/papier-dashboard")
 
 CLIENT_ID     = "J2dzflmWekLd28v00yHuUK"
 CLIENT_SECRET = "eb6beJ7TAkbTemPZfEA5mi"
@@ -65,9 +68,9 @@ month_start = datetime.now().strftime("%Y-%m-01")
 all_start   = "2026-04-17"  # 쇼핑몰 오픈일
 
 print("데이터 수집 중...")
-orders_month  = get_all_orders(month_start, today, embed="items")
-orders_today  = [o for o in orders_month if o["order_date"][:10] == today]
-orders_all    = get_all_orders(all_start, today)
+orders_all    = get_all_orders(all_start, today, embed="items")
+orders_month  = [o for o in orders_all if o["order_date"][:7] == datetime.now().strftime("%Y-%m")]
+orders_today  = [o for o in orders_all if o["order_date"][:10] == today]
 products      = get("/products", limit=100).get("products", [])
 
 # ── 집계 ─────────────────────────────────────
@@ -94,10 +97,17 @@ for o in orders_month:
     daily_sales[day] += float(o["actual_order_amount"]["order_price_amount"])
 daily_sorted = sorted(daily_sales.items())
 
-low_stock     = []  # stock.json에서 JS가 동적으로 처리
+# 상품별 판매 수량 (오픈일 이후 누적)
+sold_by_name = defaultdict(int)
+for o in orders_all:
+    for item in o.get("items", []):
+        sold_by_name[item["product_name"]] += int(item.get("quantity", 0))
+
+low_stock = []  # JS가 stock.json 기반으로 동적 계산
 
 # ── HTML 생성 ─────────────────────────────────
-now_str = datetime.now().strftime("%Y년 %m월 %d일 %H:%M 기준") + " · 매일 오전 10시 자동 갱신"
+now_str   = datetime.now().strftime("%Y년 %m월 %d일 %H:%M 기준") + " · 매일 오전 10시 자동 갱신"
+sold_json = json.dumps(dict(sold_by_name), ensure_ascii=False)
 chart_labels = json.dumps([d[0][5:] for d in daily_sorted])
 chart_data   = json.dumps([d[1] for d in daily_sorted])
 
@@ -202,8 +212,9 @@ html = f"""<!DOCTYPE html>
         <thead><tr>
           <th style="text-align:left;padding:10px;border-bottom:2px solid #eee;color:#888;font-weight:500">상품명</th>
           <th style="text-align:left;padding:10px;border-bottom:2px solid #eee;color:#888;font-weight:500">옵션</th>
-          <th style="text-align:left;padding:10px;border-bottom:2px solid #eee;color:#888;font-weight:500">재고</th>
-          <th style="text-align:left;padding:10px;border-bottom:2px solid #eee;color:#888;font-weight:500">상태</th>
+          <th style="text-align:left;padding:10px;border-bottom:2px solid #eee;color:#888;font-weight:500">기초재고</th>
+          <th style="text-align:left;padding:10px;border-bottom:2px solid #eee;color:#888;font-weight:500">판매수량</th>
+          <th style="text-align:left;padding:10px;border-bottom:2px solid #eee;color:#888;font-weight:500">잔여재고</th>
         </tr></thead>
         <tbody id="stock-tbody"><tr><td colspan="4" style="padding:20px;color:#aaa;text-align:center">불러오는 중...</td></tr></tbody>
       </table>
@@ -222,99 +233,101 @@ new Chart(document.getElementById('salesChart'), {{
 }});
 // ── 재고 관리 ─────────────────────────────────
 const GH_OWNER = 'rlaqkqehfdl1-ship-it';
-const GH_REPO  = 'papier-dashboard';
+const GH_REPO_  = 'papier-dashboard';
+const GH_TOKEN  = '{GH_PAT}';
+const SOLD      = {sold_json};   // 판매수량 (빌드 시점 기준)
 let stockSha = null, stockData = null;
-let ghToken = sessionStorage.getItem('gh_token') || '';
 
 async function loadStock() {{
   try {{
-    const r = await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO}}/contents/stock.json`);
+    const r = await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/contents/stock.json`);
     const meta = await r.json();
     stockSha = meta.sha;
     const binary = atob(meta.content.replace(/\\n/g, ''));
     const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
     stockData = JSON.parse(new TextDecoder('utf-8').decode(bytes));
     renderStock();
-    updateLowStockKpi();
   }} catch(e) {{
     document.getElementById('stock-tbody').innerHTML =
-      '<tr><td colspan="4" style="padding:20px;color:#aaa;text-align:center">재고 데이터를 불러올 수 없습니다</td></tr>';
+      '<tr><td colspan="5" style="padding:20px;color:#aaa;text-align:center">재고 데이터를 불러올 수 없습니다</td></tr>';
   }}
+}}
+
+function remColor(rem) {{
+  return rem <= 0 ? '#e53' : rem <= 5 ? '#e96' : '#2a7';
 }}
 
 function renderStock() {{
   const tbody = document.getElementById('stock-tbody');
-  let html = '', prev = null;
+  let html = '', prev = null, lowCount = 0;
   stockData.products.forEach((p, pi) => {{
+    const sold = SOLD[p.product_name] || 0;
     p.variants.forEach((v, vi) => {{
+      const base = v.base_qty ?? v.qty ?? 0;
+      const rem  = base - sold;
+      if (rem <= 5) lowCount++;
       const showName = prev !== p.product_name;
       prev = p.product_name;
       html += `<tr>
-        ${{showName ? `<td class="product-name-cell" style="padding:10px;border-bottom:1px solid #f5f5f5;font-weight:600">${{p.product_name}}</td>` : '<td style="padding:10px;border-bottom:1px solid #f5f5f5"></td>'}}
-        <td class="opt-cell" style="padding:10px;border-bottom:1px solid #f5f5f5;color:#666;font-size:12px">${{v.option}}</td>
+        ${{showName
+          ? `<td style="padding:10px;border-bottom:1px solid #f5f5f5;font-weight:600">${{p.product_name}}</td>`
+          : '<td style="padding:10px;border-bottom:1px solid #f5f5f5"></td>'}}
+        <td style="padding:10px;border-bottom:1px solid #f5f5f5;color:#666;font-size:12px">${{v.option}}</td>
         <td style="padding:10px;border-bottom:1px solid #f5f5f5">
-          <input class="qty-input" type="number" min="0" value="${{v.qty}}" data-pi="${{pi}}" data-vi="${{vi}}" onchange="onQtyChange(this)">
+          <input class="qty-input" type="number" min="0" value="${{base}}"
+            data-pi="${{pi}}" data-vi="${{vi}}" data-sold="${{sold}}" onchange="onBaseChange(this)">
         </td>
-        <td style="padding:10px;border-bottom:1px solid #f5f5f5" id="badge-${{pi}}-${{vi}}">${{qtyBadge(v.qty)}}</td>
+        <td style="padding:10px;border-bottom:1px solid #f5f5f5;color:#888">${{sold}}개</td>
+        <td id="rem-${{pi}}-${{vi}}" style="padding:10px;border-bottom:1px solid #f5f5f5;font-weight:700;color:${{remColor(rem)}}">${{rem}}개</td>
       </tr>`;
     }});
   }});
   tbody.innerHTML = html;
+  const kpi = document.getElementById('low-stock-kpi');
+  if (kpi) {{ kpi.textContent = lowCount + '개'; kpi.style.color = lowCount > 0 ? '#e53' : '#2a7'; }}
   document.getElementById('stock-status').textContent =
-    `마지막 저장: ${{stockData.updated_at || '없음'}}`;
+    `마지막 저장: ${{stockData.updated_at || '미설정'}} · 판매수량은 매일 오전 10시 갱신`;
 }}
 
-function qtyBadge(qty) {{
-  if (qty === 0) return '<span class="badge badge-out">품절</span>';
-  if (qty <= 5)  return '<span class="badge badge-danger">부족</span>';
-  return '<span class="badge badge-ok">정상</span>';
-}}
-
-function onQtyChange(input) {{
-  const qty = parseInt(input.value) || 0;
+function onBaseChange(input) {{
+  const base = parseInt(input.value) || 0;
+  const sold = parseInt(input.dataset.sold) || 0;
+  const rem  = base - sold;
   const pi = input.dataset.pi, vi = input.dataset.vi;
-  document.getElementById(`badge-${{pi}}-${{vi}}`).innerHTML = qtyBadge(qty);
-}}
-
-function updateLowStockKpi() {{
-  if (!stockData) return;
-  const low = stockData.products.flatMap(p => p.variants).filter(v => v.qty <= 5).length;
-  const el = document.getElementById('low-stock-kpi');
-  if (el) {{ el.textContent = low + '개'; el.style.color = low > 0 ? '#e53' : '#2a7'; }}
+  const el = document.getElementById(`rem-${{pi}}-${{vi}}`);
+  el.textContent = rem + '개';
+  el.style.color = remColor(rem);
 }}
 
 async function saveStock() {{
-  if (!ghToken) {{
-    ghToken = prompt('GitHub Personal Access Token을 입력하세요:\\n(repo 권한 필요 — 한 번만 입력하면 세션 동안 저장됩니다)');
-    if (!ghToken) return;
-    sessionStorage.setItem('gh_token', ghToken);
-  }}
   document.querySelectorAll('.qty-input').forEach(inp => {{
-    stockData.products[inp.dataset.pi].variants[inp.dataset.vi].qty = parseInt(inp.value) || 0;
+    const p = stockData.products[inp.dataset.pi];
+    const v = p.variants[inp.dataset.vi];
+    v.base_qty = parseInt(inp.value) || 0;
+    delete v.qty;
   }});
   stockData.updated_at = new Date().toISOString().slice(0, 10);
   const text = JSON.stringify(stockData, null, 2);
   const encBytes = new TextEncoder().encode(text);
-  let binary = ''; encBytes.forEach(b => binary += String.fromCharCode(b));
-  const content = btoa(binary);
+  let bin = ''; encBytes.forEach(b => bin += String.fromCharCode(b));
+  const content = btoa(bin);
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = '저장 중...';
-  const r = await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO}}/contents/stock.json`, {{
+  const r = await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/contents/stock.json`, {{
     method: 'PUT',
-    headers: {{ 'Authorization': `Bearer ${{ghToken}}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github+json' }},
-    body: JSON.stringify({{ message: `재고 업데이트 ${{stockData.updated_at}}`, content, sha: stockSha }})
+    headers: {{ 'Authorization': `Bearer ${{GH_TOKEN}}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github+json' }},
+    body: JSON.stringify({{ message: `재고 기초 업데이트 ${{stockData.updated_at}}`, content, sha: stockSha }})
   }});
   btn.disabled = false; btn.textContent = '저장';
   if (r.ok) {{
     const res = await r.json();
     stockSha = res.content.sha;
-    document.getElementById('stock-status').textContent = `마지막 저장: ${{stockData.updated_at}}`;
-    updateLowStockKpi();
+    document.getElementById('stock-status').textContent =
+      `마지막 저장: ${{stockData.updated_at}} · 판매수량은 매일 오전 10시 갱신`;
     alert('저장 완료!');
   }} else {{
     const err = await r.json();
     alert(`저장 실패: ${{err.message}}`);
-    if (r.status === 401) {{ ghToken = ''; sessionStorage.removeItem('gh_token'); }}
   }}
 }}
 
