@@ -415,6 +415,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "Style Central Store",
+      "contact": "",
+      "email": "",
+      "address": "알리익스프레스",
+      "note": "",
+      "materials": [
+        {
+          "name": "아크릴 연결 클립",
+          "spec": "",
+          "unit": "",
+          "unit_price": 453,
+          "moq": 1000,
+          "option": "클리어",
+          "purchase_source": "알리익스프레스",
+          "note": ""
+        }
+      ]
     }
   ]
 }
