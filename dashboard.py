@@ -840,7 +840,7 @@ function renderSupDetail(s,idx) {{
     <div class="fg" style="margin-top:16px"><label>자재 목록</label>
       <div style="overflow-x:auto">
       <table class="dtbl" style="min-width:700px"><thead><tr>
-        <th style="min-width:90px;color:#aaa;font-weight:500;white-space:nowrap">BOM 참조</th>
+        <th class="sh" onclick="sortSmat('_bomRef')" style="min-width:90px">BOM 참조<span class="arr" id="ssi-_bomRef"></span></th>
         <th class="sh" onclick="sortSmat('name')">자재명<span class="arr" id="ssi-name"></span></th>
         <th class="sh" onclick="sortSmat('spec')" style="min-width:60px">규격<span class="arr" id="ssi-spec"></span></th>
         <th class="sh" onclick="sortSmat('unit')" style="width:45px">단위<span class="arr" id="ssi-unit"></span></th>
@@ -896,7 +896,8 @@ function sortSmat(field) {{
   const rows=[];
   document.querySelectorAll('#smat tr').forEach(tr=>{{
     const ins=tr.querySelectorAll('input'); if(ins.length<8) return;
-    rows.push({{name:ins[0].value,spec:ins[1].value,unit:ins[2].value,
+    const bomRef=tr.querySelector('td:first-child')?.textContent?.trim()||'-';
+    rows.push({{_bomRef:bomRef,name:ins[0].value,spec:ins[1].value,unit:ins[2].value,
       unit_price:parseFloat(ins[3].value)||0,moq:parseFloat(ins[4].value)||1,
       option:ins[5].value,purchase_source:ins[6].value,note:ins[7].value}});
   }});
