@@ -240,6 +240,22 @@ canvas{{max-height:200px}}
 .csum .cr.tot{{border-top:1px solid #e0e0e0;margin-top:8px;padding-top:10px;font-weight:700;font-size:14px;color:#111}}
 .csum .cr.mgn{{font-size:13px;font-weight:600;color:#2a7}}
 .csum .cr.mgn.neg{{color:#e53}}
+/* Part search modal */
+.modal-bg{{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1000;align-items:center;justify-content:center;display:none}}
+.modal-bg.open{{display:flex}}
+.modal-box{{background:#fff;border-radius:12px;width:520px;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,.2)}}
+.modal-head{{padding:16px 20px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}}
+.modal-head h4{{font-size:14px;font-weight:600;color:#222}}
+.modal-close{{background:none;border:none;font-size:20px;color:#aaa;cursor:pointer;line-height:1;padding:2px 6px}}
+.modal-close:hover{{color:#333}}
+.modal-srch{{padding:12px 16px;border-bottom:1px solid #f0f0f0;flex-shrink:0}}
+.modal-srch input{{width:100%;border:1px solid #e0e0e0;border-radius:7px;padding:8px 12px;font-size:13px;outline:none;font-family:inherit}}
+.modal-srch input:focus{{border-color:#111}}
+.modal-body{{overflow-y:auto;flex:1;padding:8px 0;min-height:120px}}
+.mitem{{padding:10px 16px;cursor:pointer;border-bottom:1px solid #f8f8f8;transition:background .1s}}
+.mitem:hover{{background:#f5f5f5}}
+.mitem .mn{{font-size:13px;color:#222;font-weight:500}}
+.mitem .ms{{font-size:11px;color:#aaa;margin-top:2px}}
 </style>
 </head>
 <body>
@@ -351,6 +367,20 @@ canvas{{max-height:200px}}
 </div>
 </div>
 
+<!-- 부품 검색 모달 -->
+<div id="part-modal" class="modal-bg" onclick="if(event.target===this)closePartModal()">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h4>거래처 자재 검색</h4>
+      <button class="modal-close" onclick="closePartModal()">×</button>
+    </div>
+    <div class="modal-srch">
+      <input type="text" id="part-q" placeholder="자재명 또는 업체명 검색..." oninput="renderPartSearch(this.value)">
+    </div>
+    <div class="modal-body" id="part-results"></div>
+  </div>
+</div>
+
 <script>
 // ── Auth ─────────────────────────────────────
 const UH = '{user_hash}', PH = '{pass_hash}';
@@ -400,12 +430,17 @@ function getToken() {{
   return t||'';
 }}
 async function ghGet(f) {{
-  const r=await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/contents/${{f}}`);
+  const tok=getToken();
+  const hdrs={{'Accept':'application/vnd.github+json'}};
+  if(tok) hdrs['Authorization']='Bearer '+tok;
+  const r=await fetch(
+    `https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/contents/${{f}}?_=${{Date.now()}}`,
+    {{cache:'no-store',headers:hdrs}});
   if(!r.ok) return {{sha:null,data:null}};
   const m=await r.json();
   const bin=atob(m.content.replace(/\\n/g,''));
   const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
-  return {{sha:m.sha, data:JSON.parse(new TextDecoder('utf-8').decode(bytes))}};
+  return {{sha:m.sha,data:JSON.parse(new TextDecoder('utf-8').decode(bytes))}};
 }}
 async function ghPut(f,sha,data,msg) {{
   const tok=getToken(); if(!tok) throw new Error('토큰 없음');
@@ -503,7 +538,12 @@ function renderCostList() {{
 function selCostProd(idx) {{ const n=PRODS[idx]; selCost=n; renderCostList(); renderCostDetail(n); }}
 function renderCostDetail(n) {{
   const d=document.getElementById('costs-detail');
-  const c=costData.products[n]||{{materials:[],labor:0,packaging:0,other:0}};
+  let c=costData.products[n];
+  if(!c) {{
+    const bomParts=(bomData&&bomData.bom&&bomData.bom[n])||[];
+    const autoMats=bomParts.map(p=>({{'name':p['부품명']||'','qty':p['수량']||1,'unit':'개','unit_price':p['가격']||0}}));
+    c={{materials:autoMats,labor:0,packaging:0,other:0}};
+  }}
   const pr=PRICES[n]||0;
   d.innerHTML=`
     <h3 style="font-size:15px;margin-bottom:18px">${{n}}</h3>
@@ -608,13 +648,13 @@ function renderBomFilter() {{
 function onBomFilter() {{
   bomFilter=document.getElementById('bom-filter-sup').value;
   renderBomList();
-  if(bomFilter) {{ selBomProd=null; renderBomFilterView(); }}
+  if(bomFilter) {{ curBomProd=null; renderBomFilterView(); }}
   else document.getElementById('bom-detail').innerHTML='<div class="detail-empty">상품을 선택하세요</div>';
 }}
 function renderBomList() {{
   document.getElementById('bom-list').innerHTML=PRODS.map((n,i)=>{{
     const parts=(bomData.bom[n]||[]);
-    const matched=bomFilter?parts.filter(p=>p['거래조']===bomFilter):parts;
+    const matched=bomFilter?parts.filter(p=>p['거래처']===bomFilter):parts;
     if(bomFilter&&!matched.length) return '';
     const sub=`<div class="sub">${{bomFilter?matched.length+'개 매칭':parts.length+'개 부품'}}</div>`;
     return `<div class="li${{curBomProd===n&&!bomFilter?' active':''}}" data-idx="${{i}}" onclick="selBomProd(this.dataset.idx)"><div class="nm">${{n}}</div>${{sub}}</div>`;
@@ -631,7 +671,8 @@ function renderBomDetail(n) {{ curBomProd=n;
   d.innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <h3 style="font-size:15px">${{n}}</h3>
-      <button class="btn btn-g" style="font-size:11px;padding:5px 12px" onclick="addBomRow()">+ 부품 추가</button>
+      <button class="btn btn-g" style="font-size:11px;padding:5px 12px" onclick="openPartModal()">+ 부품 추가</button>
+      <button class="btn btn-g" style="font-size:11px;padding:5px 12px;margin-left:6px" onclick="addBomRow()">직접 입력</button>
     </div>
     <div style="overflow-x:auto">
     <table class="dtbl" style="min-width:680px">
@@ -657,6 +698,43 @@ function renderBomDetail(n) {{ curBomProd=n;
 }}
 function addBomRow() {{
   addBomRowData({{'부품명':'','구매처':'','거래처':'','가격':0,'수량':1,'moq':1,'옵션':'','크기':''}});
+}}
+function openPartModal() {{
+  if(!curBomProd) return;
+  document.getElementById('part-modal').classList.add('open');
+  document.getElementById('part-q').value='';
+  renderPartSearch('');
+  setTimeout(()=>document.getElementById('part-q').focus(),60);
+}}
+function closePartModal() {{
+  document.getElementById('part-modal').classList.remove('open');
+}}
+function renderPartSearch(q) {{
+  const sups=(supData&&supData.suppliers)||[];
+  const kw=q.trim().toLowerCase();
+  let html='';
+  sups.forEach((s,si)=>{{
+    (s.materials||[]).forEach((m,mi)=>{{
+      const nm=(m.name||'').toLowerCase(), sn=(s.name||'').toLowerCase();
+      if(kw&&!nm.includes(kw)&&!sn.includes(kw)) return;
+      const price=(m.unit_price||0).toLocaleString();
+      html+=`<div class="mitem" onclick="addPartFromModal(${{si}},${{mi}})">
+        <div class="mn">${{m.name||'(이름 없음)'}}</div>
+        <div class="ms">${{s.name||''}}${{m.spec?' · '+m.spec:''}}${{m.unit?' · '+m.unit:''}} · ${{price}}원</div>
+      </div>`;
+    }});
+  }});
+  if(!html) {{
+    if(kw) html='<div style="padding:28px;text-align:center;color:#ccc;font-size:13px">검색 결과 없음</div>';
+    else html='<div style="padding:28px;text-align:center;color:#ccc;font-size:13px">등록된 자재 없음<br><span style="font-size:11px">거래 업체 탭에서 먼저 자재를 등록하세요</span></div>';
+  }}
+  document.getElementById('part-results').innerHTML=html;
+}}
+function addPartFromModal(si,mi) {{
+  const s=supData.suppliers[si], m=s.materials[mi];
+  addBomRowData({{'부품명':m.name||'','구매처':s.name||'','거래처':s.name||'',
+    '가격':m.unit_price||0,'수량':1,'moq':1,'옵션':m.spec||'','크기':''}});
+  closePartModal();
 }}
 function addBomRowData(p) {{
   const tb=document.getElementById('bom-tbody'); if(!tb) return;
