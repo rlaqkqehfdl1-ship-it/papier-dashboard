@@ -491,6 +491,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "YMDK Store",
+      "contact": "",
+      "email": "",
+      "address": "알리익스프레스",
+      "note": "",
+      "materials": [
+        {
+          "name": "키캡",
+          "spec": "",
+          "unit": "",
+          "unit_price": 397.98,
+          "moq": 10,
+          "option": "블루",
+          "purchase_source": "알리익스프레스",
+          "note": ""
+        }
+      ]
     }
   ]
 }
