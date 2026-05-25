@@ -455,7 +455,7 @@ canvas{{max-height:200px}}
 </div>
 
 <!-- 일정 -->
-    <div class="page" id="page-schedule" style="padding-top:12px">
+    <div class="page" id="page-schedule" style="padding:6px 40px 24px">
       <div class="cal-wrap">
         <div style="background:#fff;border-radius:10px;padding:24px;box-shadow:0 1px 3px rgba(0,0,0,.07)">
           <div class="cal-header">
