@@ -676,7 +676,7 @@ function updCS() {{
     <div class="cr"><span>플랫폼수수료 (7%할인 기준)</span><span>${{fee7.toLocaleString()}}원</span></div>
     <div class="cr tot"><span>총 원가 (7%기준)</span><span>${{(totCost+ship+fee7).toLocaleString()}}원</span></div>
     <div class="cr"><span>원가율 (7%할인 기준)</span><span style="font-weight:700">${{cr}}%</span></div>
-    <div class="cr mgn${{pf7<0?' neg':''}}"><span>예상 순수익 (상시 7%할인)</span><span>${{pf7.toLocaleString()}}원</span></div>
+    <div class="cr mgn${{pf7<0?' neg':''}}"><span>예상순수익 (7% 기준)</span><span>${{pf7.toLocaleString()}}원</span></div>
     <div class="cr mgn${{pf15<0?' neg':''}}"><span>예상 순수익 (15%할인)</span><span>${{pf15.toLocaleString()}}원</span></div>`;
 }}
 async function saveCosts() {{
