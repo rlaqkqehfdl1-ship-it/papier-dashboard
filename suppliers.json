@@ -1,0 +1,22 @@
+{
+  "updated_at": "2026-05-25",
+  "suppliers": [
+    {
+      "name": "123",
+      "contact": "",
+      "email": "",
+      "address": "",
+      "note": "ㅇㄻㄴㅇㄹ",
+      "materials": [
+        {
+          "name": "1",
+          "spec": "2",
+          "unit": "",
+          "unit_price": 0,
+          "last_purchase": "",
+          "note": ""
+        }
+      ]
+    }
+  ]
+}
