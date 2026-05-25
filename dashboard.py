@@ -234,6 +234,10 @@ canvas{{max-height:200px}}
 .qtbl td{{padding:8px 10px;border-bottom:1px solid #f5f5f5;vertical-align:middle}}
 .qty-inp{{width:66px;border:1px solid #ddd;border-radius:5px;padding:3px 7px;font-size:12px;text-align:right;outline:none}}
 .qty-inp:focus{{border-color:#111}}
+/* Sortable header */
+.sh{{cursor:pointer;user-select:none;white-space:nowrap}}
+.sh:hover{{color:#555}}
+.sh .arr{{font-size:9px;margin-left:2px;color:#888}}
 /* Cost summary */
 .csum{{background:#f8f8f8;border-radius:8px;padding:14px;margin-top:12px}}
 .csum .cr{{display:flex;justify-content:space-between;font-size:12px;padding:3px 0;color:#666}}
@@ -834,9 +838,20 @@ function renderSupDetail(s,idx) {{
     </div>
     <div class="fg"><label>메모</label><textarea id="s-nt" rows="2">${{(s.note||'').replace(/</g,'&lt;')}}</textarea></div>
     <div class="fg" style="margin-top:16px"><label>자재 목록</label>
-      <table class="dtbl"><thead><tr><th>자재명</th><th style="min-width:60px">규격</th><th style="width:45px">단위</th><th style="width:80px">단가(원)</th><th style="width:55px">MOQ</th><th style="min-width:70px">옵션</th><th style="min-width:80px">구매처</th><th>메모</th><th></th></tr></thead>
+      <div style="overflow-x:auto">
+      <table class="dtbl" style="min-width:700px"><thead><tr>
+        <th style="min-width:90px;color:#aaa;font-weight:500;white-space:nowrap">BOM 참조</th>
+        <th class="sh" onclick="sortSmat('name')">자재명<span class="arr" id="ssi-name"></span></th>
+        <th class="sh" onclick="sortSmat('spec')" style="min-width:60px">규격<span class="arr" id="ssi-spec"></span></th>
+        <th class="sh" onclick="sortSmat('unit')" style="width:45px">단위<span class="arr" id="ssi-unit"></span></th>
+        <th class="sh" onclick="sortSmat('unit_price')" style="width:80px">단가(원)<span class="arr" id="ssi-unit_price"></span></th>
+        <th class="sh" onclick="sortSmat('moq')" style="width:55px">MOQ<span class="arr" id="ssi-moq"></span></th>
+        <th class="sh" onclick="sortSmat('option')" style="min-width:70px">옵션<span class="arr" id="ssi-option"></span></th>
+        <th class="sh" onclick="sortSmat('purchase_source')" style="min-width:80px">구매처<span class="arr" id="ssi-purchase_source"></span></th>
+        <th>메모</th><th></th>
+      </tr></thead>
         <tbody id="smat"></tbody>
-      </table>
+      </table></div>
       <button class="add-btn" onclick="addSMat()">+ 자재 추가</button>
     </div>
     <div class="btn-row">
@@ -844,15 +859,24 @@ function renderSupDetail(s,idx) {{
       ${{!isNew?`<button class="btn btn-d" onclick="delSup(${{idx}})">삭제</button>`:''}}
       <span class="save-st" id="sup-st"></span>
     </div>`;
+  _renderingSupName=s.name||'';
   (s.materials||[]).forEach(m=>addSMatRow(m));
+}}
+let _renderingSupName='', _supSortCol=null, _supSortDir=1;
+function getBomRefs(supName,matName) {{
+  if(!bomData||!bomData.bom||!supName||!matName) return '-';
+  const refs=PRODS.filter(prod=>(bomData.bom[prod]||[]).some(p=>p['거래처']===supName&&p['부품명']===matName));
+  return refs.length?refs.join(', '):'-';
 }}
 function addSMat() {{ addSMatRow({{name:'',spec:'',unit:'',unit_price:0,moq:1,option:'',purchase_source:'',note:''}}); }}
 function addSMatRow(m) {{
   const tb=document.getElementById('smat'); if(!tb) return;
   const esc=s=>(s||'').replace(/"/g,'&quot;');
+  const ref=getBomRefs(_renderingSupName,m.name||'');
   const tr=document.createElement('tr');
   tr.innerHTML=`
-    <td><input type="text" value="${{esc(m.name)}}" placeholder="자재명"></td>
+    <td style="padding:5px 6px;font-size:11px;color:${{ref==='-'?'#ccc':'#555'}};white-space:nowrap;max-width:100px;overflow:hidden;text-overflow:ellipsis" title="${{ref}}">${{ref}}</td>
+    <td><input type="text" value="${{esc(m.name)}}" placeholder="자재명" oninput="refreshBomRef(this)"></td>
     <td><input type="text" value="${{esc(m.spec)}}" placeholder="규격/크기"></td>
     <td><input type="text" value="${{esc(m.unit)}}" placeholder="단위" style="width:44px"></td>
     <td><input type="number" value="${{m.unit_price||0}}" min="0" style="width:72px"></td>
@@ -862,6 +886,30 @@ function addSMatRow(m) {{
     <td><input type="text" value="${{esc(m.note)}}" placeholder="메모"></td>
     <td><button class="del-btn" onclick="this.closest('tr').remove()">×</button></td>`;
   tb.appendChild(tr);
+}}
+function refreshBomRef(inp) {{
+  const td=inp.closest('tr').querySelector('td:first-child');
+  const ref=getBomRefs(_renderingSupName,inp.value);
+  td.textContent=ref; td.title=ref; td.style.color=ref==='-'?'#ccc':'#555';
+}}
+function sortSmat(field) {{
+  const rows=[];
+  document.querySelectorAll('#smat tr').forEach(tr=>{{
+    const ins=tr.querySelectorAll('input'); if(ins.length<8) return;
+    rows.push({{name:ins[0].value,spec:ins[1].value,unit:ins[2].value,
+      unit_price:parseFloat(ins[3].value)||0,moq:parseFloat(ins[4].value)||1,
+      option:ins[5].value,purchase_source:ins[6].value,note:ins[7].value}});
+  }});
+  if(_supSortCol===field) _supSortDir*=-1; else {{_supSortCol=field;_supSortDir=1;}}
+  rows.sort((a,b)=>{{
+    const va=typeof a[field]==='number'?a[field]:(a[field]||'').toLowerCase();
+    const vb=typeof b[field]==='number'?b[field]:(b[field]||'').toLowerCase();
+    return va<vb?-_supSortDir:va>vb?_supSortDir:0;
+  }});
+  document.getElementById('smat').innerHTML='';
+  rows.forEach(m=>addSMatRow(m));
+  document.querySelectorAll('[id^="ssi-"]').forEach(el=>el.textContent='');
+  const si=document.getElementById('ssi-'+field); if(si) si.textContent=_supSortDir===1?' ▲':' ▼';
 }}
 async function saveSup(idx) {{
   const nm=document.getElementById('s-nm').value.trim();
