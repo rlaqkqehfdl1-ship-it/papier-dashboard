@@ -4,7 +4,7 @@ from collections import defaultdict
 
 GH_PAT      = os.environ.get("GH_PAT", "")
 GH_REPO     = os.environ.get("GH_REPO", "rlaqkqehfdl1-ship-it/papier-dashboard")
-DASH_USER   = os.environ.get("DASH_USER", "papierachive")
+DASH_USER   = os.environ.get("DASH_USER", "papierarchive")
 DASH_PASS   = os.environ.get("DASH_PASS", "3571425qaz!")
 user_hash   = hashlib.sha256(DASH_USER.encode()).hexdigest()
 pass_hash   = hashlib.sha256(DASH_PASS.encode()).hexdigest()
