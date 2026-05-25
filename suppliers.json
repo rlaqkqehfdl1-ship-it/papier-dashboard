@@ -434,6 +434,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "올댓프린팅",
+      "contact": "",
+      "email": "",
+      "address": "온라인몰",
+      "note": "",
+      "materials": [
+        {
+          "name": "블랙 아크릴",
+          "spec": "",
+          "unit": "",
+          "unit_price": 2900,
+          "moq": 50,
+          "option": "블랙",
+          "purchase_source": "온라인몰",
+          "note": ""
+        }
+      ]
     }
   ]
 }
