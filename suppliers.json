@@ -396,6 +396,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "Octavia Dance Fitness Apparel Manufactory",
+      "contact": "",
+      "email": "",
+      "address": "알리바바",
+      "note": "",
+      "materials": [
+        {
+          "name": "발레슈즈",
+          "spec": "",
+          "unit": "",
+          "unit_price": 2312.37,
+          "moq": 100,
+          "option": "샴페인골드",
+          "purchase_source": "알리바바",
+          "note": ""
+        }
+      ]
     }
   ]
 }
