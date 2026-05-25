@@ -215,37 +215,7 @@
           "unit_price": 19,
           "moq": 540,
           "option": "",
-          "purchase_source": "",
-          "note": ""
-        },
-        {
-          "name": "",
-          "spec": "",
-          "unit": "",
-          "unit_price": 0,
-          "moq": 1,
-          "option": "",
-          "purchase_source": "",
-          "note": ""
-        },
-        {
-          "name": "",
-          "spec": "",
-          "unit": "",
-          "unit_price": 0,
-          "moq": 1,
-          "option": "",
-          "purchase_source": "",
-          "note": ""
-        },
-        {
-          "name": "",
-          "spec": "",
-          "unit": "",
-          "unit_price": 0,
-          "moq": 1,
-          "option": "",
-          "purchase_source": "",
+          "purchase_source": "동대문종합시장",
           "note": ""
         }
       ]
