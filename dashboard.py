@@ -120,6 +120,35 @@ best_vals     = json.dumps([b[1] for b in bestsellers])
 status_rows   = "".join(f'<div class="stat-chip"><span>{k}</span><strong>{v}건</strong></div>' for k, v in status_count.items())
 best_rows     = "".join(f'<li><span class="rank">{i+1}</span><span class="pname">{b[0]}</span><span class="qty">{b[1]}개</span></li>' for i, b in enumerate(bestsellers))
 
+# Monthly sales (last 12 months)
+monthly_sales = defaultdict(float)
+for o in orders_all:
+    ym = o["order_date"][:7]
+    monthly_sales[ym] += float(o["actual_order_amount"]["order_price_amount"])
+monthly_sorted = sorted(monthly_sales.items())[-12:]
+monthly_labels = json.dumps([m[0] for m in monthly_sorted], ensure_ascii=False)
+monthly_data   = json.dumps([round(m[1]) for m in monthly_sorted])
+
+# Weekly sales (this month)
+week_sales = defaultdict(float)
+for o in orders_month:
+    dt2 = datetime.strptime(o["order_date"][:10], "%Y-%m-%d")
+    week_start = (dt2 - timedelta(days=dt2.weekday())).strftime("%m/%d")
+    week_sales[week_start] += float(o["actual_order_amount"]["order_price_amount"])
+weekly_sorted = sorted(week_sales.items())
+weekly_labels = json.dumps([w[0] for w in weekly_sorted], ensure_ascii=False)
+weekly_data   = json.dumps([round(w[1]) for w in weekly_sorted])
+
+# Product revenue this month (qty * price)
+price_map = {p["product_name"]: int(float(p.get("price","0"))) for p in real_products}
+prod_rev  = {name: qty * price_map.get(name,0) for name,qty in product_sales.items() if price_map.get(name,0)>0}
+prod_rev_sorted = sorted(prod_rev.items(), key=lambda x: -x[1])
+rev_labels = json.dumps([r[0] for r in prod_rev_sorted], ensure_ascii=False)
+rev_data   = json.dumps([r[1] for r in prod_rev_sorted])
+
+# This month qty per product (for profit KPI)
+month_qty_json = json.dumps(dict(product_sales), ensure_ascii=False)
+
 # ── HTML ─────────────────────────────────────
 html = f"""<!DOCTYPE html>
 <html lang="ko">
@@ -185,6 +214,9 @@ li:nth-child(3) .rank{{color:#c87533}}
 .pname{{flex:1;font-size:12px}}
 .qty{{font-size:12px;font-weight:600;color:#666}}
 canvas{{max-height:200px}}
+.chart-btn{{background:#f0f0f0;border:none;border-radius:5px;padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;color:#888;transition:all .15s}}
+.chart-btn.active{{background:#111;color:#fff}}
+.chart-btn:hover:not(.active){{background:#ddd}}
 /* Split layout */
 .split{{display:grid;grid-template-columns:260px 1fr;gap:14px;min-height:calc(100vh - 160px)}}
 .list-panel{{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;display:flex;flex-direction:column}}
@@ -304,10 +336,25 @@ canvas{{max-height:200px}}
         <div class="kpi"><div class="lbl">이번달 총 매출</div><div class="val">{int(total_month):,}원</div><div class="sub">{month_start} ~ {today} · {order_count}건</div></div>
         <div class="kpi"><div class="lbl">오늘 매출</div><div class="val">{int(total_today):,}원</div><div class="sub">{today}</div></div>
         <div class="kpi"><div class="lbl">재고 부족 상품</div><div class="val" id="low-kpi" style="color:#bbb">-</div><div class="sub">잔여 5개 이하</div></div>
+        <div class="kpi"><div class="lbl">이번달 예상 순수익</div><div class="val" id="profit-kpi" style="color:#bbb">-</div><div class="sub">원가계산 × 판매수량</div></div>
       </div>
       <div class="grid2">
-        <div class="card"><h3>일별 매출 추이</h3><canvas id="salesChart"></canvas></div>
+        <div class="card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+            <h3 style="margin-bottom:0">매출 추이</h3>
+            <div style="display:flex;gap:4px">
+              <button class="chart-btn active" onclick="switchSalesChart('day',this)">일별</button>
+              <button class="chart-btn" onclick="switchSalesChart('week',this)">주별</button>
+              <button class="chart-btn" onclick="switchSalesChart('month',this)">월별</button>
+            </div>
+          </div>
+          <canvas id="salesChart"></canvas>
+        </div>
         <div class="card"><h3>주문 처리 현황</h3><div class="stat-chips">{status_rows}</div><br><canvas id="statusChart"></canvas></div>
+      </div>
+      <div class="grid2b">
+        <div class="card"><h3>상품별 매출 비중 (이번달)</h3><canvas id="prodRevenueChart" style="max-height:220px"></canvas></div>
+        <div class="card"><h3>상품별 판매량 순위 (이번달)</h3><canvas id="prodSalesChart" style="max-height:220px"></canvas></div>
       </div>
       <div class="grid2b">
         <div class="card"><h3>베스트셀러 (이번달)</h3><ol class="blist">{best_rows}</ol></div>
@@ -526,6 +573,7 @@ async function initCosts() {{
   const {{data}}=await ghGet('costs.json');
   costData=data||{{updated_at:'',products:{{}}}};
   renderCostList();
+  updateProfitKpi();
 }}
 function renderCostList() {{
   document.getElementById('costs-list').innerHTML=PRODS.map((n,i)=>{{
@@ -1026,18 +1074,64 @@ async function delSup(idx) {{
 }}
 
 // ── Charts ───────────────────────────────────
+const _dayL={chart_labels}, _dayD={chart_data};
+const _weekL={weekly_labels}, _weekD={weekly_data};
+const _monthL={monthly_labels}, _monthD={monthly_data};
+const MONTH_QTY={month_qty_json};
+let salesChartInst=null;
+
+function switchSalesChart(mode,btn) {{
+  document.querySelectorAll('.chart-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const L=mode==='day'?_dayL:mode==='week'?_weekL:_monthL;
+  const D=mode==='day'?_dayD:mode==='week'?_weekD:_monthD;
+  salesChartInst.data.labels=L;
+  salesChartInst.data.datasets[0].data=D;
+  salesChartInst.update();
+}}
+
+function updateProfitKpi() {{
+  if(!costData) return;
+  let total=0;
+  PRODS.forEach(prod=>{{
+    const c=costData.products[prod]; if(!c||!c.consumer_price) return;
+    const cp=c.consumer_price, p7=Math.round(cp*0.93);
+    const bomT=(c.materials||[]).reduce((s,m)=>s+Math.round((m.qty||0)*(m.unit_price||0)),0);
+    const itemT=(c.items||[]).reduce((s,it)=>s+Math.round((it.qty||0)*(it.unit_price||0)),0);
+    const fee7=Math.round(p7*0.019);
+    const pf7=p7-(bomT+itemT)-(c.shipping||0)-fee7;
+    total+=pf7*(MONTH_QTY[prod]||0);
+  }});
+  const el=document.getElementById('profit-kpi');
+  if(el){{el.textContent=total.toLocaleString()+'원';el.style.color=total>=0?'#111':'#e53535';}}
+}}
+
 function initCharts() {{
-  new Chart(document.getElementById('salesChart'),{{
+  const yTick={{ticks:{{callback:v=>v.toLocaleString()+'원'}}}};
+  salesChartInst=new Chart(document.getElementById('salesChart'),{{
     type:'bar',
-    data:{{labels:{chart_labels},datasets:[{{label:'매출(원)',data:{chart_data},
+    data:{{labels:_dayL,datasets:[{{label:'매출',data:_dayD,
       backgroundColor:'rgba(17,17,17,0.1)',borderColor:'#111',borderWidth:1.5,borderRadius:3}}]}},
-    options:{{plugins:{{legend:{{display:false}}}},scales:{{y:{{ticks:{{callback:v=>v.toLocaleString()+'원'}}}}}}}}
+    options:{{plugins:{{legend:{{display:false}}}},scales:{{y:yTick}}}}
   }});
   new Chart(document.getElementById('statusChart'),{{
     type:'doughnut',
     data:{{labels:{status_labels},datasets:[{{data:{status_vals},
       backgroundColor:['#111','#444','#777','#aaa','#ccc','#eee']}}]}},
     options:{{plugins:{{legend:{{position:'bottom',labels:{{font:{{size:10}}}}}}}}}}
+  }});
+  const PALETTE=['#111','#444','#777','#999','#bbb','#ddd'];
+  new Chart(document.getElementById('prodRevenueChart'),{{
+    type:'doughnut',
+    data:{{labels:{rev_labels},datasets:[{{data:{rev_data},backgroundColor:PALETTE}}]}},
+    options:{{plugins:{{legend:{{position:'bottom',labels:{{font:{{size:10}}}}}}}}}}
+  }});
+  new Chart(document.getElementById('prodSalesChart'),{{
+    type:'bar',
+    data:{{labels:{best_labels},datasets:[{{label:'판매량',data:{best_vals},
+      backgroundColor:'rgba(17,17,17,0.15)',borderColor:'#111',borderWidth:1.5,borderRadius:3}}]}},
+    options:{{indexAxis:'y',plugins:{{legend:{{display:false}}}},
+      scales:{{x:{{ticks:{{callback:v=>v+'개'}}}}}}}}
   }});
 }}
 </script>
