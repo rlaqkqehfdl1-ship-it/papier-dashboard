@@ -418,6 +418,13 @@ canvas{{max-height:200px}}
           </div>
         </div>
       </div>
+      <div class="card" style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h3>이번달 일정</h3>
+          <span style="font-size:11px;color:#bbb" id="dash-sch-month"></span>
+        </div>
+        <div id="dash-sch-list" style="color:#ccc;font-size:12px;text-align:center;padding:16px 0">일정 로딩 중...</div>
+      </div>
     </div>
 
     <!-- 원가 계산 -->
@@ -453,9 +460,13 @@ canvas{{max-height:200px}}
     <div class="page" id="page-suppliers">
       <div class="split">
         <div class="list-panel">
-          <div class="panel-head">
-            <h3>거래 업체</h3>
-            <button class="btn btn-g" style="padding:5px 10px;font-size:11px" onclick="addSupplier()">+ 추가</button>
+          <div class="panel-head" style="flex-direction:column;align-items:stretch;gap:8px;padding-bottom:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <h3>거래 업체</h3>
+              <button class="btn btn-g" style="padding:5px 10px;font-size:11px" onclick="addSupplier()">+ 추가</button>
+            </div>
+            <input type="text" id="sup-search" placeholder="업체명 검색..." oninput="renderSupList()"
+              style="border:1px solid #e8e8e8;border-radius:6px;padding:6px 10px;font-size:12px;outline:none;font-family:inherit;width:100%;box-sizing:border-box">
           </div>
           <div class="list-scroll" id="sup-list"></div>
         </div>
@@ -1046,13 +1057,15 @@ async function initSuppliers() {{
 }}
 function renderSupList() {{
   const el=document.getElementById('sup-list');
+  const q=(document.getElementById('sup-search')?.value||'').toLowerCase().trim();
   const sups=supData.suppliers||[];
-  el.innerHTML=sups.length?sups.map((s,i)=>`
+  const filtered=sups.map((s,i)=>({s,i})).filter(({s})=>!q||((s.name||'').toLowerCase().includes(q)));
+  el.innerHTML=filtered.length?filtered.map(({s,i})=>`
     <div class="li${{selSup===i?' active':''}}" onclick="selSupplier(${{i}})">
       <div class="nm">${{s.name||'(이름 없음)'}}</div>
       <div class="sub">자재 ${{(s.materials||[]).length}}종 · ${{s.contact||''}}</div>
     </div>`).join('')
-    :'<div style="padding:20px;color:#ccc;font-size:12px;text-align:center">등록된 업체가 없습니다</div>';
+    :`<div style="padding:20px;color:#ccc;font-size:12px;text-align:center">${{q?'검색 결과가 없습니다':'등록된 업체가 없습니다'}}</div>`;
 }}
 function addSupplier() {{ selSup=null; renderSupList(); renderSupDetail({{name:'',contact:'',email:'',address:'',note:'',materials:[]}},-1); }}
 function selSupplier(i) {{ selSup=i; renderSupList(); renderSupDetail(supData.suppliers[i],i); }}
@@ -1187,6 +1200,33 @@ async function initSchedule() {{
   const now=new Date();
   calYear=now.getFullYear(); calMonth=now.getMonth();
   renderCalendar();
+  updateDashSchedule();
+}}
+
+function updateDashSchedule() {{
+  const el=document.getElementById('dash-sch-list');
+  const ml=document.getElementById('dash-sch-month');
+  if(!el||!schData) return;
+  const now=new Date();
+  const ym=`${{now.getFullYear()}}-${{String(now.getMonth()+1).padStart(2,'0')}}`;
+  if(ml) ml.textContent=`${{now.getFullYear()}}년 ${{now.getMonth()+1}}월`;
+  const evts=(schData.events||[])
+    .filter(e=>e.date.startsWith(ym))
+    .sort((a,b)=>a.date.localeCompare(b.date)||(a.time||'').localeCompare(b.time||''));
+  if(!evts.length){{
+    el.innerHTML='<div style="color:#ccc;font-size:12px;text-align:center;padding:16px 0">이번 달 등록된 일정이 없습니다</div>';
+    return;
+  }}
+  el.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:8px">'+evts.map(e=>{{
+    const dt=new Date(e.date+'T00:00:00');
+    const dayStr=`${{dt.getMonth()+1}}/${{dt.getDate()}} (${{DOW[dt.getDay()]}})`;
+    return `<div style="background:#f8f8f8;border-radius:8px;padding:10px 14px;min-width:150px;max-width:220px">
+      <div style="font-size:10px;color:#aaa;margin-bottom:4px">${{dayStr}}${{e.time?' · '+e.time:''}}</div>
+      <span class="evt-badge ${{e.type||'기타'}}" style="font-size:9px;padding:1px 6px">${{e.type||'기타'}}</span>
+      <div style="font-size:13px;font-weight:600;color:#111;margin-top:5px">${{e.title||''}}</div>
+      ${{e.location?`<div style="font-size:10px;color:#bbb;margin-top:3px">📍 ${{e.location}}</div>`:''}}
+    </div>`;
+  }}).join('')+'</div>';
 }}
 
 function calMove(dir) {{
