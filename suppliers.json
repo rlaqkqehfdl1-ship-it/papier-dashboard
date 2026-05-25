@@ -284,25 +284,6 @@
           "option": "",
           "purchase_source": "동대문종합시장",
           "note": ""
-        }
-      ]
-    },
-    {
-      "name": "스댕24",
-      "contact": "",
-      "email": "",
-      "address": "동대문종합시장 A동 5042호",
-      "note": "",
-      "materials": [
-        {
-          "name": "121 열쇠",
-          "spec": "",
-          "unit": "",
-          "unit_price": 2200,
-          "moq": 50,
-          "option": "",
-          "purchase_source": "동대문종합시장",
-          "note": ""
         },
         {
           "name": "삼각 카라비너",
