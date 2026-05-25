@@ -34,18 +34,29 @@ def get(path, **params):
     return requests.get(f"{BASE}{path}", headers=H(), params=params).json()
 
 def get_all_orders(start_date, end_date, embed=None):
-    """페이지네이션으로 전체 주문 수집"""
-    all_orders, offset = [], 0
-    params = {"start_date": start_date, "end_date": end_date, "limit": 100}
-    if embed:
-        params["embed"] = embed
-    while True:
-        params["offset"] = offset
-        batch = requests.get(f"{BASE}/orders", headers=H(), params=params).json().get("orders", [])
-        all_orders.extend(batch)
-        if len(batch) < 100:
-            break
-        offset += 100
+    """90일 단위로 나눠서 전체 주문 수집 (Cafe24 API 날짜 범위 제한 대응)"""
+    from datetime import datetime, timedelta
+    all_orders = []
+    cur = datetime.strptime(start_date, "%Y-%m-%d")
+    end = datetime.strptime(end_date, "%Y-%m-%d")
+    while cur <= end:
+        chunk_end = min(cur + timedelta(days=89), end)
+        params = {
+            "start_date": cur.strftime("%Y-%m-%d"),
+            "end_date": chunk_end.strftime("%Y-%m-%d"),
+            "limit": 100,
+        }
+        if embed:
+            params["embed"] = embed
+        offset = 0
+        while True:
+            params["offset"] = offset
+            batch = requests.get(f"{BASE}/orders", headers=H(), params=params).json().get("orders", [])
+            all_orders.extend(batch)
+            if len(batch) < 100:
+                break
+            offset += 100
+        cur = chunk_end + timedelta(days=1)
     return all_orders
 
 # ── 데이터 수집 ──────────────────────────────
