@@ -662,7 +662,7 @@ function updCS() {{
   const ship=parseFloat(document.getElementById('c-ship')?.value)||0;
   const cp=parseFloat(document.getElementById('c-cprice')?.value)||0;
   const p7=Math.round(cp*0.93), p10=Math.round(cp*0.9), p15=Math.round(cp*0.85), p20=Math.round(cp*0.8);
-  const fee7=Math.round(p7*0.019), fee15=Math.round(p10*0.019);
+  const fee7=Math.round(p7*0.019), fee15=Math.round(cp*0.019);
   const cr=p7>0?((totCost+ship+fee7)/p7*100).toFixed(1):'0';
   const pf7=p7-totCost-ship-fee7, pf15=p15-totCost-ship-fee15;
   const s=(id,v)=>{{const e=document.getElementById(id);if(e)e.textContent=v;}};
@@ -671,8 +671,7 @@ function updCS() {{
   s('c-p15',p15.toLocaleString()+'원'); s('c-p20',p20.toLocaleString()+'원');
   const el=document.getElementById('csum'); if(!el) return;
   el.innerHTML=`
-    <div class="cr"><span>재료비 합계 (BOM)</span><span>${{bomT.toLocaleString()}}원</span></div>
-    <div class="cr"><span>항목 합계</span><span>${{itemT.toLocaleString()}}원</span></div>
+    <div class="cr"><span>항목 합계 (1~10번)</span><span>${{totCost.toLocaleString()}}원</span></div>
     <div class="cr"><span>배송비</span><span>${{ship.toLocaleString()}}원</span></div>
     <div class="cr"><span>플랫폼수수료 (7%할인 기준)</span><span>${{fee7.toLocaleString()}}원</span></div>
     <div class="cr tot"><span>총 원가 (7%기준)</span><span>${{(totCost+ship+fee7).toLocaleString()}}원</span></div>
