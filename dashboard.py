@@ -75,7 +75,7 @@ real_products = [p for p in products if float(p.get("price", "0")) > 0]
 all_variants  = []
 for p in real_products:
     for v in get(f"/products/{p['product_no']}/variants").get("variants", []):
-        opt = " / ".join(o["value"] for o in v.get("options", []) if o.get("value") and o["value"] != "N")
+        opt = " / ".join(o["value"] for o in v.get("options") or [] if o.get("value") and o["value"] != "N")
         qty = int(v.get("stock_quantity") or 0)
         all_variants.append({
             "product_name": p["product_name"],
