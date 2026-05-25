@@ -185,17 +185,17 @@
           "unit_price": 72,
           "moq": 140,
           "option": "본색",
-          "purchase_source": "",
+          "purchase_source": "동대문종합시장",
           "note": ""
         },
         {
-          "name": "",
+          "name": "미니참 O링",
           "spec": "",
           "unit": "",
-          "unit_price": 0,
-          "moq": 1,
+          "unit_price": 8,
+          "moq": 1300,
           "option": "",
-          "purchase_source": "",
+          "purchase_source": "동대문종합시장",
           "note": ""
         },
         {
