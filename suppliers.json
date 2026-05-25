@@ -567,6 +567,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "Yiwu City Diyi Jewelry Firm",
+      "contact": "",
+      "email": "",
+      "address": "알리바바",
+      "note": "",
+      "materials": [
+        {
+          "name": "비정형 거울",
+          "spec": "",
+          "unit": "",
+          "unit_price": 1800.24,
+          "moq": 50,
+          "option": "실버",
+          "purchase_source": "알리바바",
+          "note": ""
+        }
+      ]
     }
   ]
 }
