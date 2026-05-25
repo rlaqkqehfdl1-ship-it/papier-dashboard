@@ -4,8 +4,8 @@ from collections import defaultdict
 
 GH_PAT      = os.environ.get("GH_PAT", "")
 GH_REPO     = os.environ.get("GH_REPO", "rlaqkqehfdl1-ship-it/papier-dashboard")
-DASH_USER   = os.environ.get("DASH_USER", "admin")
-DASH_PASS   = os.environ.get("DASH_PASS", "papier2024")
+DASH_USER   = os.environ.get("DASH_USER", "papierachive")
+DASH_PASS   = os.environ.get("DASH_PASS", "3571425qaz!")
 user_hash   = hashlib.sha256(DASH_USER.encode()).hexdigest()
 pass_hash   = hashlib.sha256(DASH_PASS.encode()).hexdigest()
 
@@ -346,14 +346,19 @@ async function sha256(s) {{
   return Array.from(new Uint8Array(b)).map(x=>x.toString(16).padStart(2,'0')).join('');
 }}
 async function login() {{
-  const u=document.getElementById('lu').value.trim(), p=document.getElementById('lp').value;
-  const [uh,ph] = await Promise.all([sha256(u),sha256(p)]);
-  if(uh===UH&&ph===PH) {{
-    sessionStorage.setItem('auth','1');
-    document.getElementById('login-screen').style.display='none';
-    document.getElementById('app').style.display='block';
-    initApp();
-  }} else {{ document.getElementById('lerr').textContent='아이디 또는 비밀번호가 틀렸습니다.'; }}
+  const errEl = document.getElementById('lerr');
+  try {{
+    const u=document.getElementById('lu').value.trim(), p=document.getElementById('lp').value;
+    if(!u||!p) {{ errEl.textContent='아이디와 비밀번호를 입력하세요.'; return; }}
+    errEl.textContent='확인 중...';
+    const [uh,ph] = await Promise.all([sha256(u),sha256(p)]);
+    if(uh===UH&&ph===PH) {{
+      sessionStorage.setItem('auth','1');
+      document.getElementById('login-screen').style.display='none';
+      document.getElementById('app').style.display='block';
+      initApp();
+    }} else {{ errEl.textContent='아이디 또는 비밀번호가 틀렸습니다.'; }}
+  }} catch(e) {{ errEl.textContent='오류: '+e.message; }}
 }}
 function logout() {{ sessionStorage.removeItem('auth'); location.reload(); }}
 window.addEventListener('DOMContentLoaded', ()=>{{
