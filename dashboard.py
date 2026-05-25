@@ -531,11 +531,13 @@ function renderCostList() {{
   document.getElementById('costs-list').innerHTML=PRODS.map((n,i)=>{{
     const c=costData.products[n];
     let sub='';
-    if(c) {{
-      const mc=(c.materials||[]).reduce((s,m)=>s+(m.qty||0)*(m.unit_price||0),0);
-      const tot=Math.round(mc+(c.labor||0)+(c.packaging||0)+(c.other||0));
-      const pr=PRICES[n]||0, mg=pr>0?Math.round((pr-tot)/pr*100):0;
-      sub=`<div class="sub">원가 ${{tot.toLocaleString()}}원 · 마진 ${{mg}}%</div>`;
+    if(c&&c.consumer_price) {{
+      const cp=c.consumer_price, p7=Math.round(cp*0.93);
+      const bomT=((bomData&&bomData.bom&&bomData.bom[n])||[]).reduce((s,p)=>s+(p['수량']||0)*(p['가격']||0),0);
+      const itT=(c.items||[]).reduce((s,it)=>s+(it.qty||0)*(it.unit_price||0),0);
+      const fee7=Math.round(p7*0.019), ship=c.shipping||0;
+      const cr=p7>0?Math.round((bomT+itT+ship+fee7)/p7*100):0;
+      sub=`<div class="sub">소비자가 ${{cp.toLocaleString()}}원 · 원가율 ${{cr}}%</div>`;
     }}
     return `<div class="li${{selCost===n?' active':''}}" data-idx="${{i}}" onclick="selCostProd(this.dataset.idx)"><div class="nm">${{n}}</div>${{sub}}</div>`;
   }}).join('');
@@ -543,34 +545,78 @@ function renderCostList() {{
 function selCostProd(idx) {{ const n=PRODS[idx]; selCost=n; renderCostList(); renderCostDetail(n); }}
 function renderCostDetail(n) {{
   const d=document.getElementById('costs-detail');
-  const c=costData.products[n]||{{labor:0,packaging:0,other:0}};
-  // 재료비는 항상 BOM에서 자동 반영 (costs.json 저장값 무시)
+  const c=costData.products[n]||{{}};
   const bomParts=(bomData&&bomData.bom&&bomData.bom[n])||[];
   c.materials=bomParts.map(p=>({{'name':p['부품명']||'','qty':p['수량']||1,'unit':'개','unit_price':p['가격']||0}}));
-  const pr=PRICES[n]||0;
+  const saved=c.items||[];
+  while(saved.length<10) saved.push({{'name':'','supplier':'','qty':0,'unit_price':0,'spec':''}});
+  const itemRows=saved.slice(0,10).map((it,i)=>`
+    <tr>
+      <td style="width:18px;text-align:center;color:#ccc;font-size:10px;padding:2px 3px">${{i+1}}</td>
+      <td><input type="text" value="${{(it.name||'').replace(/"/g,'&quot;')}}" placeholder="항목명" oninput="updCS()"></td>
+      <td><input type="text" value="${{(it.supplier||'').replace(/"/g,'&quot;')}}" placeholder="업체명" oninput="updCS()"></td>
+      <td><input type="number" value="${{it.qty||0}}" min="0" step="0.01" style="width:52px" oninput="updCS()"></td>
+      <td><input type="number" value="${{it.unit_price||0}}" min="0" style="width:68px" oninput="updCS()"></td>
+      <td><input type="text" value="${{(it.spec||'').replace(/"/g,'&quot;')}}" placeholder="사양" oninput="updCS()"></td>
+      <td class="isum" style="text-align:right;font-size:11px;color:#aaa;padding:2px 6px;white-space:nowrap">0원</td>
+    </tr>`).join('');
   d.innerHTML=`
-    <h3 style="font-size:15px;margin-bottom:18px">${{n}}</h3>
-    <div class="frow c2" style="margin-bottom:14px">
-      <div class="fg"><label>판매가 (카페24)</label>
-        <input type="text" value="${{pr.toLocaleString()}}원" disabled style="background:#f8f8f8;color:#999">
-      </div><div></div>
-    </div>
+    <h3 style="font-size:15px;margin-bottom:12px">${{n}}</h3>
     <div class="fg"><label>재료비 <span style="font-size:10px;color:#bbb;font-weight:400">· BOM 탭에서 수정하세요</span></label>
-      <table class="dtbl"><thead><tr><th>재료명</th><th style="width:60px">수량</th><th style="width:50px">단위</th><th style="width:90px">단가(원)</th><th style="width:80px">합계</th></tr></thead>
+      <table class="dtbl"><thead><tr><th>재료명</th><th style="width:55px">수량</th><th style="width:45px">단위</th><th style="width:85px">단가(원)</th><th style="width:75px">합계</th></tr></thead>
         <tbody id="cmat"></tbody>
       </table>
+      <div style="text-align:right;font-size:11px;color:#888;padding:4px 0 0">재료비 합계: <strong id="bom-total">0원</strong></div>
     </div>
-    <div class="frow c3" style="margin-bottom:12px">
-      <div class="fg"><label>인건비 (원/개)</label><input type="number" id="c-lab" value="${{c.labor||0}}" min="0" onchange="updCS()"></div>
-      <div class="fg"><label>포장재비 (원)</label><input type="number" id="c-pkg" value="${{c.packaging||0}}" min="0" onchange="updCS()"></div>
-      <div class="fg"><label>기타 비용 (원)</label><input type="number" id="c-oth" value="${{c.other||0}}" min="0" onchange="updCS()"></div>
+    <div style="display:flex;gap:12px;margin-top:12px;align-items:stretch">
+      <div style="flex:1;overflow-x:auto">
+        <table class="dtbl" style="min-width:440px">
+          <thead><tr>
+            <th style="width:18px"></th>
+            <th>항목명</th><th style="min-width:70px">업체명</th>
+            <th style="width:52px">수량</th><th style="width:68px">단가(원)</th>
+            <th style="min-width:60px">사양</th><th style="width:65px">합계</th>
+          </tr></thead>
+          <tbody id="citems">${{itemRows}}</tbody>
+          <tfoot><tr>
+            <td colspan="6" style="text-align:right;font-size:11px;color:#888;padding:4px 6px">항목 합계</td>
+            <td style="text-align:right;font-size:12px;font-weight:600;padding:4px 6px;white-space:nowrap" id="items-total">0원</td>
+          </tr></tfoot>
+        </table>
+      </div>
+      <div style="min-width:185px;background:#f8f8f8;border-radius:8px;padding:12px 14px;font-size:12px;display:flex;flex-direction:column;gap:7px;flex-shrink:0">
+        <div>
+          <div style="font-size:10px;color:#999;margin-bottom:3px;font-weight:500">배송비 (원)</div>
+          <input type="number" id="c-ship" value="${{c.shipping||0}}" min="0" oninput="updCS()"
+            style="width:100%;border:1px solid #e0e0e0;border-radius:5px;padding:5px 8px;font-size:12px;outline:none;font-family:inherit">
+        </div>
+        <div style="border-top:1px solid #e8e8e8;padding-top:7px">
+          <div style="display:flex;justify-content:space-between;padding:2px 0">
+            <span style="color:#888">플랫폼수수료 7%</span><span id="c-fee7" style="font-weight:500">0원</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0">
+            <span style="color:#888">플랫폼수수료 15%</span><span id="c-fee15" style="font-weight:500">0원</span>
+          </div>
+        </div>
+        <div style="border-top:1px solid #e8e8e8;padding-top:7px">
+          <div style="font-size:10px;color:#999;margin-bottom:3px;font-weight:500">소비자가 (원)</div>
+          <input type="number" id="c-cprice" value="${{c.consumer_price||0}}" min="0" oninput="updCS()"
+            style="width:100%;border:1px solid #e0e0e0;border-radius:5px;padding:5px 8px;font-size:12px;outline:none;font-family:inherit">
+        </div>
+        <div style="border-top:1px solid #e8e8e8;padding-top:7px">
+          <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px"><span style="color:#555">상시 7% 할인가</span><span id="c-p7" style="font-weight:500">0원</span></div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px"><span style="color:#555">10% 할인가</span><span id="c-p10" style="font-weight:500">0원</span></div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px"><span style="color:#555">15% 할인가</span><span id="c-p15" style="font-weight:500">0원</span></div>
+          <div style="display:flex;justify-content:space-between;padding:2px 0;font-size:11px"><span style="color:#555">20% 할인가</span><span id="c-p20" style="font-weight:500">0원</span></div>
+        </div>
+      </div>
     </div>
-    <div class="csum" id="csum"></div>
+    <div class="csum" id="csum" style="margin-top:12px"></div>
     <div class="btn-row">
       <button class="btn btn-p" onclick="saveCosts()">저장</button>
       <span class="save-st" id="cost-st"></span>
     </div>`;
-  (c.materials||[]).forEach(m=>addCMatRow(m));
+  c.materials.forEach(m=>addCMatRow(m));
   updCS();
 }}
 function addCMatRow(m) {{
@@ -580,33 +626,48 @@ function addCMatRow(m) {{
   tr.dataset.unit=m.unit||'개'; tr.dataset.price=m.unit_price||0;
   const sub=Math.round((m.qty||0)*(m.unit_price||0));
   tr.innerHTML=`
-    <td style="padding:5px 6px;font-size:12px">${{m.name||''}}</td>
-    <td style="padding:5px 6px;font-size:12px;text-align:center">${{m.qty||0}}</td>
-    <td style="padding:5px 6px;font-size:12px;text-align:center">${{m.unit||'개'}}</td>
-    <td style="padding:5px 6px;font-size:12px;text-align:right">${{(m.unit_price||0).toLocaleString()}}</td>
-    <td style="padding:5px 6px;font-size:11px;color:#aaa;text-align:right">${{sub.toLocaleString()}}원</td>`;
+    <td style="padding:4px 6px;font-size:12px">${{m.name||''}}</td>
+    <td style="padding:4px 6px;font-size:12px;text-align:center">${{m.qty||0}}</td>
+    <td style="padding:4px 6px;font-size:12px;text-align:center">${{m.unit||'개'}}</td>
+    <td style="padding:4px 6px;font-size:12px;text-align:right">${{(m.unit_price||0).toLocaleString()}}</td>
+    <td style="padding:4px 6px;font-size:11px;color:#aaa;text-align:right">${{sub.toLocaleString()}}원</td>`;
   tb.appendChild(tr);
 }}
 function updCS() {{
-  const tb=document.getElementById('cmat'); if(!tb) return;
-  let mt=0;
-  tb.querySelectorAll('tr').forEach(tr=>{{
-    mt+=Math.round((parseFloat(tr.dataset.qty)||0)*(parseFloat(tr.dataset.price)||0));
+  let bomT=0;
+  document.querySelectorAll('#cmat tr').forEach(tr=>{{
+    bomT+=Math.round((parseFloat(tr.dataset.qty)||0)*(parseFloat(tr.dataset.price)||0));
   }});
-  const lab=parseFloat(document.getElementById('c-lab')?.value)||0;
-  const pkg=parseFloat(document.getElementById('c-pkg')?.value)||0;
-  const oth=parseFloat(document.getElementById('c-oth')?.value)||0;
-  const tot=Math.round(mt+lab+pkg+oth);
-  const pr=selCost?(PRICES[selCost]||0):0;
-  const mg=pr>0?Math.round((pr-tot)/pr*100):0, ma=pr-tot, neg=mg<0;
+  const btEl=document.getElementById('bom-total'); if(btEl) btEl.textContent=bomT.toLocaleString()+'원';
+  let itemT=0;
+  document.querySelectorAll('#citems tr').forEach(tr=>{{
+    const ins=tr.querySelectorAll('input'); if(ins.length<4) return;
+    const sub=Math.round((parseFloat(ins[2].value)||0)*(parseFloat(ins[3].value)||0));
+    itemT+=sub;
+    const el=tr.querySelector('.isum'); if(el) el.textContent=sub.toLocaleString()+'원';
+  }});
+  const itEl=document.getElementById('items-total'); if(itEl) itEl.textContent=itemT.toLocaleString()+'원';
+  const totCost=bomT+itemT;
+  const ship=parseFloat(document.getElementById('c-ship')?.value)||0;
+  const cp=parseFloat(document.getElementById('c-cprice')?.value)||0;
+  const p7=Math.round(cp*0.93), p10=Math.round(cp*0.9), p15=Math.round(cp*0.85), p20=Math.round(cp*0.8);
+  const fee7=Math.round(p7*0.019), fee15=Math.round(p10*0.019);
+  const cr=p7>0?((totCost+ship+fee7)/p7*100).toFixed(1):'0';
+  const pf7=p7-totCost-ship-fee7, pf15=p15-totCost-ship-fee15;
+  const s=(id,v)=>{{const e=document.getElementById(id);if(e)e.textContent=v;}};
+  s('c-fee7',fee7.toLocaleString()+'원'); s('c-fee15',fee15.toLocaleString()+'원');
+  s('c-p7',p7.toLocaleString()+'원'); s('c-p10',p10.toLocaleString()+'원');
+  s('c-p15',p15.toLocaleString()+'원'); s('c-p20',p20.toLocaleString()+'원');
   const el=document.getElementById('csum'); if(!el) return;
   el.innerHTML=`
-    <div class="cr"><span>재료비 합계</span><span>${{Math.round(mt).toLocaleString()}}원</span></div>
-    <div class="cr"><span>인건비</span><span>${{Math.round(lab).toLocaleString()}}원</span></div>
-    <div class="cr"><span>포장재비</span><span>${{Math.round(pkg).toLocaleString()}}원</span></div>
-    <div class="cr"><span>기타</span><span>${{Math.round(oth).toLocaleString()}}원</span></div>
-    <div class="cr tot"><span>총 원가</span><span>${{tot.toLocaleString()}}원</span></div>
-    <div class="cr mgn${{neg?' neg':''}}"><span>마진 (${{mg}}%)</span><span>${{ma.toLocaleString()}}원</span></div>`;
+    <div class="cr"><span>재료비 합계 (BOM)</span><span>${{bomT.toLocaleString()}}원</span></div>
+    <div class="cr"><span>항목 합계</span><span>${{itemT.toLocaleString()}}원</span></div>
+    <div class="cr"><span>배송비</span><span>${{ship.toLocaleString()}}원</span></div>
+    <div class="cr"><span>플랫폼수수료 (7%할인 기준)</span><span>${{fee7.toLocaleString()}}원</span></div>
+    <div class="cr tot"><span>총 원가 (7%기준)</span><span>${{(totCost+ship+fee7).toLocaleString()}}원</span></div>
+    <div class="cr"><span>원가율 (7%할인 기준)</span><span style="font-weight:700">${{cr}}%</span></div>
+    <div class="cr mgn${{pf7<0?' neg':''}}"><span>예상 순수익 (상시 7%할인)</span><span>${{pf7.toLocaleString()}}원</span></div>
+    <div class="cr mgn${{pf15<0?' neg':''}}"><span>예상 순수익 (15%할인)</span><span>${{pf15.toLocaleString()}}원</span></div>`;
 }}
 async function saveCosts() {{
   if(!selCost) return;
@@ -615,8 +676,15 @@ async function saveCosts() {{
     mats.push({{name:tr.dataset.name||'',qty:parseFloat(tr.dataset.qty)||0,
       unit:tr.dataset.unit||'개',unit_price:parseFloat(tr.dataset.price)||0}});
   }});
-  costData.products[selCost]={{materials:mats,labor:parseFloat(document.getElementById('c-lab').value)||0,
-    packaging:parseFloat(document.getElementById('c-pkg').value)||0,other:parseFloat(document.getElementById('c-oth').value)||0}};
+  const items=[];
+  document.querySelectorAll('#citems tr').forEach(tr=>{{
+    const ins=tr.querySelectorAll('input'); if(ins.length<5) return;
+    items.push({{name:ins[0].value,supplier:ins[1].value,
+      qty:parseFloat(ins[2].value)||0,unit_price:parseFloat(ins[3].value)||0,spec:ins[4].value}});
+  }});
+  costData.products[selCost]={{materials:mats,items:items,
+    shipping:parseFloat(document.getElementById('c-ship').value)||0,
+    consumer_price:parseFloat(document.getElementById('c-cprice').value)||0}};
   costData.updated_at=new Date().toISOString().slice(0,10);
   const st=document.getElementById('cost-st'); st.textContent='저장 중...';
   try {{
