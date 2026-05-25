@@ -539,12 +539,10 @@ function renderCostList() {{
 function selCostProd(idx) {{ const n=PRODS[idx]; selCost=n; renderCostList(); renderCostDetail(n); }}
 function renderCostDetail(n) {{
   const d=document.getElementById('costs-detail');
-  let c=costData.products[n];
-  if(!c) {{
-    const bomParts=(bomData&&bomData.bom&&bomData.bom[n])||[];
-    const autoMats=bomParts.map(p=>({{'name':p['부품명']||'','qty':p['수량']||1,'unit':'개','unit_price':p['가격']||0}}));
-    c={{materials:autoMats,labor:0,packaging:0,other:0}};
-  }}
+  const c=costData.products[n]||{{labor:0,packaging:0,other:0}};
+  // 재료비는 항상 BOM에서 자동 반영 (costs.json 저장값 무시)
+  const bomParts=(bomData&&bomData.bom&&bomData.bom[n])||[];
+  c.materials=bomParts.map(p=>({{'name':p['부품명']||'','qty':p['수량']||1,'unit':'개','unit_price':p['가격']||0}}));
   const pr=PRICES[n]||0;
   d.innerHTML=`
     <h3 style="font-size:15px;margin-bottom:18px">${{n}}</h3>
