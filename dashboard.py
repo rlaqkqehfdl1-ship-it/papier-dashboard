@@ -234,9 +234,17 @@ new Chart(document.getElementById('salesChart'), {{
 // ── 재고 관리 ─────────────────────────────────
 const GH_OWNER = 'rlaqkqehfdl1-ship-it';
 const GH_REPO_  = 'papier-dashboard';
-const GH_TOKEN  = '{GH_PAT}';
 const SOLD      = {sold_json};   // 판매수량 (빌드 시점 기준)
 let stockSha = null, stockData = null;
+
+function getGHToken() {{
+  let tok = localStorage.getItem('gh_token');
+  if (!tok) {{
+    tok = prompt('GitHub Personal Access Token을 입력하세요:\\n(처음 한 번만 입력하면 저장됩니다)');
+    if (tok) localStorage.setItem('gh_token', tok.trim());
+  }}
+  return tok ? tok.trim() : null;
+}}
 
 async function loadStock() {{
   try {{
@@ -300,6 +308,8 @@ function onBaseChange(input) {{
 }}
 
 async function saveStock() {{
+  const token = getGHToken();
+  if (!token) {{ alert('토큰이 없으면 저장할 수 없습니다.'); return; }}
   document.querySelectorAll('.qty-input').forEach(inp => {{
     const p = stockData.products[inp.dataset.pi];
     const v = p.variants[inp.dataset.vi];
@@ -315,7 +325,7 @@ async function saveStock() {{
   btn.disabled = true; btn.textContent = '저장 중...';
   const r = await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/contents/stock.json`, {{
     method: 'PUT',
-    headers: {{ 'Authorization': `Bearer ${{GH_TOKEN}}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github+json' }},
+    headers: {{ 'Authorization': `Bearer ${{token}}`, 'Content-Type': 'application/json', 'Accept': 'application/vnd.github+json' }},
     body: JSON.stringify({{ message: `재고 기초 업데이트 ${{stockData.updated_at}}`, content, sha: stockSha }})
   }});
   btn.disabled = false; btn.textContent = '저장';
