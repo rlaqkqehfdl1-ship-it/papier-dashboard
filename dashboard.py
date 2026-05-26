@@ -371,6 +371,7 @@ canvas{{max-height:200px}}
       <a id="nav-bom"                      onclick="showPage('bom')">      <span class="ic">📋</span>BOM</a>
       <a id="nav-suppliers"                onclick="showPage('suppliers')"><span class="ic">🏢</span>거래 업체</a>
       <a id="nav-schedule"                 onclick="showPage('schedule')"> <span class="ic">📅</span>일정</a>
+      <a id="nav-minutes"                  onclick="showPage('minutes')">  <span class="ic">📝</span>회의록</a>
     </nav>
     <div class="logout"><button onclick="logout()">로그아웃</button></div>
   </div>
@@ -471,6 +472,20 @@ canvas{{max-height:200px}}
           <div class="list-scroll" id="sup-list"></div>
         </div>
         <div class="detail" id="sup-detail"><div class="detail-empty">업체를 선택하거나 추가하세요</div></div>
+      </div>
+    </div>
+
+    <!-- 회의록 -->
+    <div class="page" id="page-minutes">
+      <div class="split">
+        <div class="list-panel">
+          <div class="panel-head">
+            <h3>회의록</h3>
+            <button class="btn btn-g" style="padding:5px 10px;font-size:11px" onclick="newMinute()">+ 새 회의록</button>
+          </div>
+          <div class="list-scroll" id="min-list"></div>
+        </div>
+        <div class="detail" id="min-detail"><div class="detail-empty">회의록을 선택하거나 새로 작성하세요</div></div>
       </div>
     </div>
 
@@ -625,7 +640,7 @@ async function ghPut(f,data,msg) {{
 
 // ── Init ─────────────────────────────────────
 function initApp() {{
-  initCharts(); loadStock(); initCosts(); initBom(); initSuppliers(); initSchedule();
+  initCharts(); loadStock(); initCosts(); initBom(); initSuppliers(); initSchedule(); initMinutes();
 }}
 
 // ── 재고 ─────────────────────────────────────
@@ -1361,6 +1376,106 @@ async function deleteSchEvent(id) {{
     await ghPut('schedule.json',schData,'일정 삭제');
     renderEvtList(); renderCalendar();
   }} catch(e) {{ schData.events.splice(idx,0,removed); alert('삭제 실패: '+e.message); }}
+}}
+
+// ── 회의록 ─────────────────────────────────────
+let minData=null, selMin=null;
+
+async function initMinutes() {{
+  const {{data}}=await ghGet('minutes.json');
+  minData=data||{{updated_at:'',minutes:[]}};
+  renderMinutesList();
+}}
+
+function renderMinutesList() {{
+  const el=document.getElementById('min-list');
+  if(!el) return;
+  const mins=(minData.minutes||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  if(!mins.length){{
+    el.innerHTML='<div style="padding:20px;color:#ccc;font-size:12px;text-align:center">작성된 회의록이 없습니다</div>';
+    return;
+  }}
+  el.innerHTML=mins.map(m=>`
+    <div class="li${{selMin===m.id?' active':''}}" onclick="selMinute(${{m.id}})">
+      <div class="nm">${{m.title||'(제목 없음)'}}</div>
+      <div class="sub">${{m.date||''}} · ${{(m.attendees||'참석자 없음')}}</div>
+    </div>`).join('');
+}}
+
+function selMinute(id) {{
+  selMin=id;
+  renderMinutesList();
+  const m=minData.minutes.find(x=>x.id===id);
+  if(m) renderMinuteDetail(m);
+}}
+
+function newMinute() {{
+  selMin=null;
+  renderMinutesList();
+  renderMinuteDetail(null);
+}}
+
+function renderMinuteDetail(m) {{
+  const d=document.getElementById('min-detail');
+  const isNew=!m;
+  const today=new Date().toISOString().slice(0,10);
+  d.innerHTML=`
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <h3 style="font-size:15px">${{isNew?'새 회의록':'회의록'}}</h3>
+    </div>
+    <div class="frow c2">
+      <div class="fg"><label>날짜 *</label><input type="date" id="m-date" value="${{m?m.date:today}}"></div>
+      <div class="fg"><label>제목 *</label><input type="text" id="m-title" value="${{m?(m.title||'').replace(/"/g,'&quot;'):''}}" placeholder="회의 제목"></div>
+    </div>
+    <div class="fg"><label>참석자</label><input type="text" id="m-att" value="${{m?(m.attendees||'').replace(/"/g,'&quot;'):''}}" placeholder="홍길동, 김철수 (쉼표로 구분)"></div>
+    <div class="fg"><label>안건</label><textarea id="m-agenda" rows="3" placeholder="회의 안건을 입력하세요">${{m?(m.agenda||'').replace(/</g,'&lt;'):''}}</textarea></div>
+    <div class="fg"><label>결정사항</label><textarea id="m-dec" rows="4" placeholder="결정된 사항을 입력하세요">${{m?(m.decisions||'').replace(/</g,'&lt;'):''}}</textarea></div>
+    <div class="fg"><label>다음 할 일</label><textarea id="m-act" rows="3" placeholder="다음 액션 아이템을 입력하세요">${{m?(m.actions||'').replace(/</g,'&lt;'):''}}</textarea></div>
+    <div class="fg"><label>기타</label><textarea id="m-note" rows="2" placeholder="기타 메모">${{m?(m.notes||'').replace(/</g,'&lt;'):''}}</textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-p" onclick="saveMinute(${{isNew?null:m.id}})">${{isNew?'저장':'수정 저장'}}</button>
+      ${{!isNew?`<button class="btn btn-d" onclick="deleteMinute(${{m.id}})">삭제</button>`:''}}
+      <span class="save-st" id="min-st"></span>
+    </div>`;
+}}
+
+async function saveMinute(id) {{
+  const title=document.getElementById('m-title').value.trim();
+  const date=document.getElementById('m-date').value;
+  if(!title||!date){{alert('날짜와 제목은 필수입니다.');return;}}
+  const obj={{
+    id:id||Date.now(), date, title,
+    attendees:document.getElementById('m-att').value.trim(),
+    agenda:document.getElementById('m-agenda').value.trim(),
+    decisions:document.getElementById('m-dec').value.trim(),
+    actions:document.getElementById('m-act').value.trim(),
+    notes:document.getElementById('m-note').value.trim()
+  }};
+  if(id) {{
+    const idx=minData.minutes.findIndex(x=>x.id===id);
+    if(idx>=0) minData.minutes[idx]=obj;
+  }} else {{
+    minData.minutes.push(obj); selMin=obj.id;
+  }}
+  minData.updated_at=new Date().toISOString().slice(0,10);
+  const st=document.getElementById('min-st'); st.textContent='저장 중...';
+  try {{
+    await ghPut('minutes.json',minData,'회의록 저장: '+title);
+    st.textContent='저장 완료';
+    renderMinutesList(); renderMinuteDetail(obj);
+  }} catch(e){{st.textContent='';alert('저장 실패: '+e.message);}}
+}}
+
+async function deleteMinute(id) {{
+  if(!confirm('이 회의록을 삭제할까요?')) return;
+  const idx=minData.minutes.findIndex(x=>x.id===id);
+  if(idx<0) return;
+  const removed=minData.minutes.splice(idx,1)[0];
+  try {{
+    await ghPut('minutes.json',minData,'회의록 삭제');
+    selMin=null; renderMinutesList();
+    document.getElementById('min-detail').innerHTML='<div class="detail-empty">회의록을 선택하거나 새로 작성하세요</div>';
+  }} catch(e){{minData.minutes.splice(idx,0,removed);alert('삭제 실패: '+e.message);}}
 }}
 
 // ── Charts ───────────────────────────────────
