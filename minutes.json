@@ -1,4 +1,15 @@
 {
   "updated_at": "2026-05-26",
-  "minutes": []
+  "minutes": [
+    {
+      "id": 1779762025555,
+      "date": "2026-05-26",
+      "title": "123",
+      "attendees": "1",
+      "agenda": "1",
+      "decisions": "23",
+      "actions": "123",
+      "notes": "123"
+    }
+  ]
 }
