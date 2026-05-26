@@ -340,6 +340,22 @@ canvas{{max-height:200px}}
 .mitem:hover{{background:#f5f5f5}}
 .mitem .mn{{font-size:13px;color:#222;font-weight:500}}
 .mitem .ms{{font-size:11px;color:#aaa;margin-top:2px}}
+/* Marketing */
+.mktype-badge{{font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;white-space:nowrap}}
+.mktype-badge.할인행사{{background:#fff3e0;color:#e65100}}
+.mktype-badge.쿠폰{{background:#f3e5f5;color:#6a1b9a}}
+.mktype-badge.SNS포스팅{{background:#fce4ec;color:#ad1457}}
+.mktype-badge.광고{{background:#e3f2fd;color:#1565c0}}
+.mktype-badge.기획전{{background:#e0f2f1;color:#00695c}}
+.mktype-badge.기타{{background:#f5f5f5;color:#757575}}
+.mkst-진행중{{background:#e8f5e9;color:#2e7d32}}
+.mkst-준비중{{background:#e8eaf6;color:#3949ab}}
+.mkst-종료{{background:#f5f5f5;color:#aaa}}
+.ch-chip{{display:inline-block;padding:4px 11px;border-radius:20px;font-size:11px;cursor:pointer;border:1px solid #e0e0e0;background:#fff;color:#888;transition:all .12s;user-select:none}}
+.ch-chip.on{{background:#111;color:#fff;border-color:#111}}
+.prog-bar{{background:#f0f0f0;border-radius:4px;height:7px;overflow:hidden;margin-top:5px}}
+.prog-fill{{height:100%;border-radius:4px;background:#111;transition:width .3s}}
+.mk-group-hd{{font-size:10px;font-weight:700;color:#aaa;padding:10px 18px 4px;letter-spacing:.5px;text-transform:uppercase}}
 </style>
 </head>
 <body>
@@ -372,6 +388,7 @@ canvas{{max-height:200px}}
       <a id="nav-suppliers"                onclick="showPage('suppliers')"><span class="ic">🏢</span>거래 업체</a>
       <a id="nav-schedule"                 onclick="showPage('schedule')"> <span class="ic">📅</span>일정</a>
       <a id="nav-minutes"                  onclick="showPage('minutes')">  <span class="ic">📝</span>회의록</a>
+      <a id="nav-marketing"               onclick="showPage('marketing')"><span class="ic">📢</span>마케팅</a>
     </nav>
     <div class="logout"><button onclick="logout()">로그아웃</button></div>
   </div>
@@ -426,6 +443,13 @@ canvas{{max-height:200px}}
         </div>
         <div id="dash-sch-list" style="color:#ccc;font-size:12px;text-align:center;padding:16px 0">일정 로딩 중...</div>
       </div>
+      <div class="card" style="margin-bottom:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h3>진행중인 프로모션</h3>
+          <span style="font-size:11px;color:#bbb" id="mk-dash-count"></span>
+        </div>
+        <div id="dash-mk-list" style="color:#ccc;font-size:12px;text-align:center;padding:16px 0">로딩 중...</div>
+      </div>
     </div>
 
     <!-- 원가 계산 -->
@@ -472,6 +496,20 @@ canvas{{max-height:200px}}
           <div class="list-scroll" id="sup-list"></div>
         </div>
         <div class="detail" id="sup-detail"><div class="detail-empty">업체를 선택하거나 추가하세요</div></div>
+      </div>
+    </div>
+
+    <!-- 마케팅 -->
+    <div class="page" id="page-marketing">
+      <div class="split">
+        <div class="list-panel">
+          <div class="panel-head">
+            <h3>마케팅/프로모션</h3>
+            <button class="btn btn-g" style="padding:5px 10px;font-size:11px" onclick="newMarketing()">+ 등록</button>
+          </div>
+          <div class="list-scroll" id="mk-list"></div>
+        </div>
+        <div class="detail" id="mk-detail"><div class="detail-empty">캠페인을 선택하거나 새로 등록하세요</div></div>
       </div>
     </div>
 
@@ -692,7 +730,7 @@ async function ghDeleteFile(path) {{
 
 // ── Init ─────────────────────────────────────
 function initApp() {{
-  initCharts(); loadStock(); initCosts(); initBom(); initSuppliers(); initSchedule(); initMinutes();
+  initCharts(); loadStock(); initCosts(); initBom(); initSuppliers(); initSchedule(); initMinutes(); initMarketing();
 }}
 
 // ── 재고 ─────────────────────────────────────
@@ -1548,6 +1586,190 @@ async function deleteMinute(id) {{
     selMin=null; renderMinutesList();
     document.getElementById('min-detail').innerHTML='<div class="detail-empty">회의록을 선택하거나 새로 작성하세요</div>';
   }} catch(e){{minData.minutes.splice(idx,0,removed);alert('삭제 실패: '+e.message);}}
+}}
+
+// ── 마케팅/프로모션 ───────────────────────────
+const MK_TYPES=['할인행사','쿠폰','SNS포스팅','광고','기획전','기타'];
+const MK_CHANNELS=['Cafe24','인스타그램','카카오톡','네이버','유튜브','기타'];
+let mkData=null, selMk=null;
+
+async function initMarketing() {{
+  const {{data}}=await ghGet('marketing.json');
+  mkData=data||{{updated_at:'',campaigns:[]}};
+  renderMarketingList();
+  updateDashMarketing();
+}}
+
+function mkAutoStatus(c) {{
+  if(c.status) return c.status;
+  const today=new Date().toISOString().slice(0,10);
+  if(!c.start_date||today<c.start_date) return '준비중';
+  if(!c.end_date||today<=c.end_date) return '진행중';
+  return '종료';
+}}
+
+function renderMarketingList() {{
+  const el=document.getElementById('mk-list'); if(!el) return;
+  const camps=mkData.campaigns||[];
+  if(!camps.length){{
+    el.innerHTML='<div style="padding:20px;color:#ccc;font-size:12px;text-align:center">등록된 캠페인이 없습니다</div>';
+    return;
+  }}
+  const groups={{'진행중':[],'준비중':[],'종료':[]}};
+  camps.forEach((c,i)=>{{ const st=mkAutoStatus(c); (groups[st]||groups['종료']).push({{c,i}}); }});
+  const icons={{'진행중':'● ','준비중':'○ ','종료':'· '}};
+  let html='';
+  [['진행중'],['준비중'],['종료']].forEach(([st])=>{{
+    const g=groups[st]; if(!g.length) return;
+    html+=`<div class="mk-group-hd">${{icons[st]||''}}<span class="mkst-${{st}}" style="font-size:10px;padding:1px 7px;border-radius:8px;font-weight:700">${{st}}</span> ${{g.length}}건</div>`;
+    g.forEach(({{c,i}})=>{{
+      const ds=c.start_date?(c.start_date.slice(5)+(c.end_date?' ~ '+c.end_date.slice(5):'')):'날짜 미정';
+      html+=`<div class="li${{selMk===i?' active':''}}" onclick="selMarketing(${{i}})">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+          <span style="flex:1;font-size:13px;color:#222;font-weight:${{selMk===i?700:400}}">${{c.title||'(제목 없음)'}}</span>
+          <span class="mktype-badge ${{c.type||'기타'}}">${{c.type||'기타'}}</span>
+        </div>
+        <div class="sub">${{ds}}${{(c.channels||[]).length?' · '+(c.channels||[]).join(', '):''}}</div>
+        ${{(c.target_sales>0)?`<div class="prog-bar" style="margin-top:5px"><div class="prog-fill" style="width:${{Math.min(100,Math.round((c.actual_sales||0)/c.target_sales*100))}}%"></div></div>`:''}}</div>`;
+    }});
+  }});
+  el.innerHTML=html;
+}}
+
+function selMarketing(i) {{
+  selMk=i; renderMarketingList(); renderMarketingDetail(mkData.campaigns[i],i);
+}}
+
+function newMarketing() {{
+  selMk=null; renderMarketingList(); renderMarketingDetail(null,-1);
+}}
+
+function renderMarketingDetail(c,idx) {{
+  const d=document.getElementById('mk-detail');
+  const isNew=!c;
+  const today=new Date().toISOString().slice(0,10);
+  const curType=c?c.type:'할인행사';
+  const curSt=c?c.status:'준비중';
+  const channels=c?(c.channels||[]):[];
+  const tgt=c&&c.target_sales?c.target_sales:0;
+  const actual=c&&c.actual_sales?c.actual_sales:0;
+  const pct=tgt>0?Math.min(100,Math.round(actual/tgt*100)):0;
+  const typeOpts=MK_TYPES.map(t=>`<option${{curType===t?' selected':''}}>${{t}}</option>`).join('');
+  const stOpts=['준비중','진행중','종료'].map(s=>`<option${{curSt===s?' selected':''}}>${{s}}</option>`).join('');
+  const chipsHtml=MK_CHANNELS.map(ch=>`<span class="ch-chip${{channels.includes(ch)?' on':''}}" onclick="this.classList.toggle('on')">${{ch}}</span>`).join('');
+  d.innerHTML=`
+    <h3 style="font-size:15px;margin-bottom:18px">${{isNew?'새 캠페인 등록':'캠페인 상세'}}</h3>
+    <div class="frow c2">
+      <div class="fg"><label>제목 *</label><input type="text" id="mk-title" value="${{c?(c.title||'').replace(/"/g,'&quot;'):''}}" placeholder="캠페인 제목"></div>
+      <div class="fg"><label>유형</label><select id="mk-type" style="width:100%;border:1px solid #e0e0e0;border-radius:7px;padding:8px 10px;font-size:13px;outline:none;font-family:inherit">${{typeOpts}}</select></div>
+    </div>
+    <div class="frow c3">
+      <div class="fg"><label>상태</label><select id="mk-status" style="width:100%;border:1px solid #e0e0e0;border-radius:7px;padding:8px 10px;font-size:13px;outline:none;font-family:inherit">${{stOpts}}</select></div>
+      <div class="fg"><label>시작일</label><input type="date" id="mk-start" value="${{c?c.start_date||'':today}}"></div>
+      <div class="fg"><label>종료일</label><input type="date" id="mk-end" value="${{c?c.end_date||'':''}}"></div>
+    </div>
+    <div class="fg"><label>채널</label><div style="display:flex;flex-wrap:wrap;gap:6px;padding-top:4px">${{chipsHtml}}</div></div>
+    <div class="fg"><label>할인/내용</label><input type="text" id="mk-disc" value="${{c?(c.discount||'').replace(/"/g,'&quot;'):''}}" placeholder="예: 전상품 10% 할인, 쿠폰코드 SPRING10"></div>
+    <div class="frow c2">
+      <div class="fg"><label>목표 매출 (원)</label><input type="number" id="mk-tgt" value="${{tgt}}" min="0" oninput="updMkProgress()"></div>
+      <div class="fg"><label>실제 매출 (원)</label><input type="number" id="mk-actual" value="${{actual}}" min="0" oninput="updMkProgress()"></div>
+    </div>
+    <div id="mk-prog-wrap" style="${{tgt>0?'':'display:none'}};margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#888;margin-bottom:4px">
+        <span>목표 달성률</span>
+        <span id="mk-pct-txt">${{pct}}% (${{actual.toLocaleString()}}원 / ${{tgt.toLocaleString()}}원)</span>
+      </div>
+      <div class="prog-bar"><div class="prog-fill" id="mk-prog-fill" style="width:${{pct}}%"></div></div>
+    </div>
+    <div class="fg"><label>기획 메모</label><textarea id="mk-memo" rows="3" placeholder="캠페인 기획 내용, 진행 방식 등">${{c?(c.memo||'').replace(/</g,'&lt;'):''}}</textarea></div>
+    <div class="fg"><label>결과 기록 <span style="font-size:10px;color:#bbb;font-weight:400">· 종료 후 작성</span></label><textarea id="mk-result" rows="3" placeholder="실제 결과, 고객 반응, 개선점 등">${{c?(c.result||'').replace(/</g,'&lt;'):''}}</textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-p" onclick="saveMarketing(${{isNew?-1:idx}})">저장</button>
+      ${{!isNew?`<button class="btn btn-d" onclick="deleteMarketing(${{idx}})">삭제</button>`:''}}
+      <span class="save-st" id="mk-st"></span>
+    </div>`;
+}}
+
+function updMkProgress() {{
+  const tgt=parseFloat(document.getElementById('mk-tgt')?.value)||0;
+  const actual=parseFloat(document.getElementById('mk-actual')?.value)||0;
+  const wrap=document.getElementById('mk-prog-wrap');
+  const fill=document.getElementById('mk-prog-fill');
+  const txt=document.getElementById('mk-pct-txt');
+  if(!wrap) return;
+  if(tgt>0) {{
+    wrap.style.display='';
+    const pct=Math.min(100,Math.round(actual/tgt*100));
+    if(fill) fill.style.width=pct+'%';
+    if(txt) txt.textContent=pct+'% ('+actual.toLocaleString()+'원 / '+tgt.toLocaleString()+'원)';
+  }} else {{ wrap.style.display='none'; }}
+}}
+
+async function saveMarketing(idx) {{
+  const title=document.getElementById('mk-title').value.trim();
+  if(!title){{alert('제목을 입력하세요.');return;}}
+  const channels=[...document.querySelectorAll('.ch-chip.on')].map(el=>el.textContent.trim());
+  const obj={{
+    id:idx>=0?(mkData.campaigns[idx].id||Date.now()):Date.now(),
+    title,
+    type:document.getElementById('mk-type').value,
+    status:document.getElementById('mk-status').value,
+    start_date:document.getElementById('mk-start').value,
+    end_date:document.getElementById('mk-end').value,
+    channels,
+    discount:document.getElementById('mk-disc').value.trim(),
+    target_sales:parseFloat(document.getElementById('mk-tgt').value)||0,
+    actual_sales:parseFloat(document.getElementById('mk-actual').value)||0,
+    memo:document.getElementById('mk-memo').value.trim(),
+    result:document.getElementById('mk-result').value.trim()
+  }};
+  if(idx>=0) mkData.campaigns[idx]=obj;
+  else {{mkData.campaigns.push(obj); selMk=mkData.campaigns.length-1;}}
+  mkData.updated_at=new Date().toISOString().slice(0,10);
+  const st=document.getElementById('mk-st'); st.textContent='저장 중...';
+  try {{
+    await ghPut('marketing.json',mkData,'마케팅 저장: '+title);
+    st.textContent='저장 완료';
+    renderMarketingList(); updateDashMarketing();
+    if(idx<0) renderMarketingDetail(obj,mkData.campaigns.length-1);
+  }} catch(e){{st.textContent='';alert('저장 실패: '+e.message);}}
+}}
+
+async function deleteMarketing(idx) {{
+  if(!confirm('이 캠페인을 삭제할까요?')) return;
+  const removed=mkData.campaigns.splice(idx,1)[0];
+  try {{
+    await ghPut('marketing.json',mkData,'마케팅 삭제');
+    selMk=null; renderMarketingList(); updateDashMarketing();
+    document.getElementById('mk-detail').innerHTML='<div class="detail-empty">캠페인을 선택하거나 새로 등록하세요</div>';
+  }} catch(e){{mkData.campaigns.splice(idx,0,removed);alert('삭제 실패: '+e.message);}}
+}}
+
+function updateDashMarketing() {{
+  const el=document.getElementById('dash-mk-list');
+  const ct=document.getElementById('mk-dash-count');
+  if(!el||!mkData) return;
+  const active=(mkData.campaigns||[]).filter(c=>mkAutoStatus(c)==='진행중');
+  if(ct) ct.textContent=active.length?active.length+'개 진행중':'';
+  if(!active.length){{
+    el.innerHTML='<div style="color:#ccc;font-size:12px;text-align:center;padding:16px 0">진행중인 프로모션이 없습니다</div>';
+    return;
+  }}
+  el.innerHTML='<div style="display:flex;flex-wrap:wrap;gap:10px">'+active.map(c=>{{
+    const tgt=c.target_sales||0, actual=c.actual_sales||0;
+    const pct=tgt>0?Math.min(100,Math.round(actual/tgt*100)):0;
+    const ds=c.start_date?(c.start_date.slice(5)+(c.end_date?' ~ '+c.end_date.slice(5):'')):'';
+    return `<div style="background:#f8f8f8;border-radius:9px;padding:12px 16px;min-width:180px;flex:1;max-width:260px">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+        <span class="mktype-badge ${{c.type||'기타'}}">${{c.type||'기타'}}</span>
+        <span style="font-size:13px;font-weight:600;color:#111">${{c.title}}</span>
+      </div>
+      <div style="font-size:10px;color:#bbb;margin-bottom:4px">${{ds}}${{c.discount?' · '+c.discount:''}}</div>
+      ${{(c.channels||[]).length?`<div style="font-size:10px;color:#aaa;margin-bottom:6px">${{c.channels.join(' · ')}}</div>`:''}}
+      ${{tgt>0?`<div style="display:flex;justify-content:space-between;font-size:10px;color:#888;margin-bottom:3px"><span>달성률</span><span>${{pct}}%</span></div>
+        <div class="prog-bar"><div class="prog-fill" style="width:${{pct}}%"></div></div>`:''}}
+    </div>`;
+  }}).join('')+'</div>';
 }}
 
 // ── 회의록 첨부파일 ───────────────────────────
