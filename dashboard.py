@@ -645,6 +645,50 @@ async function ghPut(f,data,msg) {{
   }});
   if(!r.ok) throw new Error((await r.json()).message);
 }}
+async function ghGetFileSha(path) {{
+  const tok=getToken();
+  const hdrs={{'Accept':'application/vnd.github+json'}};
+  if(tok) hdrs['Authorization']='Bearer '+tok;
+  const r=await fetch(
+    `https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/contents/${{path}}?_=${{Date.now()}}`,
+    {{cache:'no-store',headers:hdrs}});
+  if(!r.ok) return null;
+  return (await r.json()).sha||null;
+}}
+async function ghUploadFile(path,file) {{
+  return new Promise((resolve,reject)=>{{
+    if(file.size>5*1024*1024){{reject(new Error('파일 크기는 5MB 이하만 가능합니다.'));return;}}
+    const reader=new FileReader();
+    reader.onerror=reject;
+    reader.onload=async(e)=>{{
+      try {{
+        const b64=e.target.result.split(',')[1];
+        const tok=getToken(); if(!tok) throw new Error('토큰 없음');
+        const sha=await ghGetFileSha(path);
+        const body={{message:'첨부파일 업로드',content:b64}};
+        if(sha) body.sha=sha;
+        const r=await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/contents/${{path}}`,{{
+          method:'PUT',headers:{{'Authorization':`Bearer ${{tok}}`,'Content-Type':'application/json','Accept':'application/vnd.github+json'}},
+          body:JSON.stringify(body)
+        }});
+        if(!r.ok) throw new Error((await r.json()).message);
+        resolve();
+      }} catch(err){{reject(err);}}
+    }};
+    reader.readAsDataURL(file);
+  }});
+}}
+async function ghDeleteFile(path) {{
+  const tok=getToken(); if(!tok) throw new Error('토큰 없음');
+  const sha=await ghGetFileSha(path);
+  if(!sha) return;
+  const r=await fetch(`https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/contents/${{path}}`,{{
+    method:'DELETE',
+    headers:{{'Authorization':`Bearer ${{tok}}`,'Content-Type':'application/json','Accept':'application/vnd.github+json'}},
+    body:JSON.stringify({{message:'첨부파일 삭제',sha}})
+  }});
+  if(!r.ok) throw new Error((await r.json()).message);
+}}
 
 // ── Init ─────────────────────────────────────
 function initApp() {{
@@ -1458,11 +1502,13 @@ function renderMinuteDetail(m) {{
     <div class="fg"><label>결정사항</label><textarea id="m-dec" rows="4" placeholder="결정된 사항을 입력하세요">${{m?(m.decisions||'').replace(/</g,'&lt;'):''}}</textarea></div>
     <div class="fg"><label>다음 할 일</label><textarea id="m-act" rows="3" placeholder="다음 액션 아이템을 입력하세요">${{m?(m.actions||'').replace(/</g,'&lt;'):''}}</textarea></div>
     <div class="fg"><label>기타</label><textarea id="m-note" rows="2" placeholder="기타 메모">${{m?(m.notes||'').replace(/</g,'&lt;'):''}}</textarea></div>
+    <div id="att-section"></div>
     <div class="btn-row">
       <button class="btn btn-p" onclick="saveMinute(${{isNew?null:m.id}})">${{isNew?'저장':'수정 저장'}}</button>
       ${{!isNew?`<button class="btn btn-d" onclick="deleteMinute(${{m.id}})">삭제</button>`:''}}
       <span class="save-st" id="min-st"></span>
     </div>`;
+  renderAttachSection(m);
 }}
 
 async function saveMinute(id) {{
@@ -1502,6 +1548,107 @@ async function deleteMinute(id) {{
     selMin=null; renderMinutesList();
     document.getElementById('min-detail').innerHTML='<div class="detail-empty">회의록을 선택하거나 새로 작성하세요</div>';
   }} catch(e){{minData.minutes.splice(idx,0,removed);alert('삭제 실패: '+e.message);}}
+}}
+
+// ── 회의록 첨부파일 ───────────────────────────
+function isImgMime(mime){{ return (mime||'').startsWith('image/'); }}
+function fileIconFor(mime){{
+  if(!mime) return '📄';
+  if(mime.includes('pdf')) return '📕';
+  if(mime.includes('word')||mime.includes('document')) return '📘';
+  if(mime.includes('sheet')||mime.includes('excel')) return '📗';
+  if(mime.includes('presentation')||mime.includes('powerpoint')) return '📙';
+  return '📄';
+}}
+function rawFileUrl(path){{
+  return `https://raw.githubusercontent.com/${{GH_OWNER}}/${{GH_REPO_}}/main/${{path}}?_=${{Date.now()}}`;
+}}
+function viewAttImg(url){{
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:2000;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
+  ov.onclick=()=>document.body.removeChild(ov);
+  const img=document.createElement('img');
+  img.src=url; img.style.cssText='max-width:92vw;max-height:92vh;border-radius:8px;box-shadow:0 4px 40px rgba(0,0,0,.5)';
+  ov.appendChild(img); document.body.appendChild(ov);
+}}
+function renderAttachSection(m){{
+  const el=document.getElementById('att-section'); if(!el) return;
+  const isNew=!m;
+  let h='<div style="border-top:1px solid #f0f0f0;margin-top:18px;padding-top:14px">';
+  h+='<div style="font-size:11px;color:#888;font-weight:500;margin-bottom:10px">첨부파일</div>';
+  if(isNew){{
+    h+='<div style="font-size:12px;color:#ccc;padding:6px 0">저장 후 파일을 첨부할 수 있습니다</div>';
+  }}else{{
+    h+=`<div style="margin-bottom:12px;display:flex;align-items:center;flex-wrap:wrap;gap:8px">
+      <label style="display:inline-flex;align-items:center;gap:6px;background:#f5f5f5;border:1px solid #e0e0e0;border-radius:6px;padding:7px 14px;font-size:12px;cursor:pointer;color:#555;transition:background .12s" onmouseover="this.style.background='#eee'" onmouseout="this.style.background='#f5f5f5'">
+        📎 파일 첨부
+        <input type="file" id="att-input" style="display:none" onchange="uploadMinuteAttachment(${{m.id}})" accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt,.ppt,.pptx">
+      </label>
+      <span style="font-size:11px;color:#ccc">이미지, PDF, 문서 · 5MB 이하</span>
+      <span id="att-st" class="save-st"></span>
+    </div>`;
+    const atts=m.attachments||[];
+    if(atts.length){{
+      h+='<div style="display:flex;flex-wrap:wrap;gap:10px">';
+      atts.forEach((a,i)=>{{
+        const url=rawFileUrl(a.path);
+        if(isImgMime(a.mime)){{
+          h+=`<div style="position:relative;text-align:center;flex-shrink:0">
+            <img src="${{url}}" style="width:110px;height:82px;object-fit:cover;border-radius:8px;border:1px solid #e8e8e8;cursor:zoom-in;display:block" onclick="viewAttImg(this.src)" title="클릭하면 크게 보기">
+            <button onclick="deleteMinuteAttachment(${{m.id}},${{i}})" title="삭제" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,.55);border:none;color:#fff;border-radius:50%;width:20px;height:20px;font-size:13px;cursor:pointer;line-height:20px;padding:0;text-align:center">×</button>
+            <div style="font-size:9px;color:#999;margin-top:4px;width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${{a.name}}">${{a.name}}</div>
+          </div>`;
+        }}else{{
+          h+=`<div style="display:flex;align-items:center;gap:8px;background:#f8f8f8;border-radius:8px;padding:9px 12px;border:1px solid #eee;max-width:240px">
+            <span style="font-size:22px;flex-shrink:0">${{fileIconFor(a.mime)}}</span>
+            <div style="flex:1;min-width:0">
+              <a href="${{url}}" target="_blank" style="font-size:12px;color:#333;text-decoration:none;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${{a.name}}">${{a.name}}</a>
+              <div style="font-size:10px;color:#bbb;margin-top:1px">클릭하여 열기</div>
+            </div>
+            <button onclick="deleteMinuteAttachment(${{m.id}},${{i}})" title="삭제" style="background:none;border:none;color:#ccc;cursor:pointer;font-size:18px;line-height:1;padding:0 2px;flex-shrink:0">×</button>
+          </div>`;
+        }}
+      }});
+      h+='</div>';
+    }}else{{
+      h+='<div style="font-size:12px;color:#ccc">첨부된 파일이 없습니다</div>';
+    }}
+  }}
+  h+='</div>';
+  el.innerHTML=h;
+}}
+async function uploadMinuteAttachment(minuteId){{
+  const input=document.getElementById('att-input'); if(!input||!input.files.length) return;
+  const file=input.files[0];
+  const ts=Date.now();
+  const safe=file.name.replace(/[^a-zA-Z0-9._가-힣-]/g,'_');
+  const path=`uploads/minutes/${{ts}}_${{safe}}`;
+  const st=document.getElementById('att-st'); st.textContent='업로드 중...';
+  try{{
+    await ghUploadFile(path,file);
+    const m=minData.minutes.find(x=>x.id===minuteId);
+    if(!m) throw new Error('회의록을 찾을 수 없습니다');
+    if(!m.attachments) m.attachments=[];
+    m.attachments.push({{filename:`${{ts}}_${{safe}}`,name:file.name,path,mime:file.type}});
+    minData.updated_at=new Date().toISOString().slice(0,10);
+    await ghPut('minutes.json',minData,'첨부파일 추가: '+file.name);
+    st.textContent='업로드 완료';
+    input.value='';
+    renderAttachSection(m);
+  }}catch(e){{st.textContent='';alert('업로드 실패: '+e.message);}}
+}}
+async function deleteMinuteAttachment(minuteId,attIdx){{
+  if(!confirm('이 첨부파일을 삭제할까요?')) return;
+  const m=minData.minutes.find(x=>x.id===minuteId);
+  if(!m||!m.attachments) return;
+  const att=m.attachments[attIdx];
+  try{{
+    await ghDeleteFile(att.path);
+    m.attachments.splice(attIdx,1);
+    minData.updated_at=new Date().toISOString().slice(0,10);
+    await ghPut('minutes.json',minData,'첨부파일 삭제: '+att.name);
+    renderAttachSection(m);
+  }}catch(e){{alert('삭제 실패: '+e.message);}}
 }}
 
 // ── Charts ───────────────────────────────────
