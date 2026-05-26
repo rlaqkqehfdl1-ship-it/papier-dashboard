@@ -825,7 +825,7 @@ function updCS() {{
   const ship=parseFloat(document.getElementById('c-ship')?.value)||0;
   const cp=parseFloat(document.getElementById('c-cprice')?.value)||0;
   const p7=Math.round(cp*0.93), p10=Math.round(cp*0.9), p15=Math.round(cp*0.85), p20=Math.round(cp*0.8);
-  const fee7=Math.round(p7*0.019), fee15=Math.round(p10*0.019);
+  const fee7=Math.round(p7*0.019), fee15=Math.round(p15*0.019);
   const cr=p7>0?((totCost+ship+fee7)/p7*100).toFixed(2):'0';
   const pf7=p7-totCost-ship-fee7, pf15=p15-totCost-ship-fee15;
   const s=(id,v)=>{{const e=document.getElementById(id);if(e)e.textContent=v;}};
