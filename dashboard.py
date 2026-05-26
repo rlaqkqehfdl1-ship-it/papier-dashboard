@@ -479,9 +479,17 @@ canvas{{max-height:200px}}
     <div class="page" id="page-minutes">
       <div class="split">
         <div class="list-panel">
-          <div class="panel-head">
-            <h3>회의록</h3>
-            <button class="btn btn-g" style="padding:5px 10px;font-size:11px" onclick="newMinute()">+ 새 회의록</button>
+          <div class="panel-head" style="flex-direction:column;align-items:stretch;gap:8px;padding-bottom:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between">
+              <h3>회의록</h3>
+              <button class="btn btn-g" style="padding:5px 10px;font-size:11px" onclick="newMinute()">+ 새 회의록</button>
+            </div>
+            <input type="text" id="min-search" placeholder="검색..." oninput="renderMinutesList()"
+              style="border:1px solid #e8e8e8;border-radius:6px;padding:6px 10px;font-size:12px;outline:none;font-family:inherit;width:100%;box-sizing:border-box">
+            <div style="display:flex;gap:4px">
+              <button id="min-mode-title" class="chart-btn active" onclick="setMinSearch('title',this)" style="font-size:11px;padding:3px 10px">제목</button>
+              <button id="min-mode-all" class="chart-btn" onclick="setMinSearch('all',this)" style="font-size:11px;padding:3px 10px">전체 내용</button>
+            </div>
           </div>
           <div class="list-scroll" id="min-list"></div>
         </div>
@@ -1379,7 +1387,7 @@ async function deleteSchEvent(id) {{
 }}
 
 // ── 회의록 ─────────────────────────────────────
-let minData=null, selMin=null;
+let minData=null, selMin=null, minSearchMode='title';
 
 async function initMinutes() {{
   const {{data}}=await ghGet('minutes.json');
@@ -1390,16 +1398,34 @@ async function initMinutes() {{
 function renderMinutesList() {{
   const el=document.getElementById('min-list');
   if(!el) return;
-  const mins=(minData.minutes||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
-  if(!mins.length){{
+  const q=(document.getElementById('min-search')?.value||'').toLowerCase().trim();
+  const allMins=(minData.minutes||[]).slice().sort((a,b)=>b.date.localeCompare(a.date));
+  const mins=allMins.filter(m=>{{
+    if(!q) return true;
+    if(minSearchMode==='title') return (m.title||'').toLowerCase().includes(q);
+    return ['title','attendees','agenda','decisions','actions','notes']
+      .some(k=>(m[k]||'').toLowerCase().includes(q));
+  }});
+  if(!allMins.length){{
     el.innerHTML='<div style="padding:20px;color:#ccc;font-size:12px;text-align:center">작성된 회의록이 없습니다</div>';
+    return;
+  }}
+  if(!mins.length){{
+    el.innerHTML=`<div style="padding:20px;color:#ccc;font-size:12px;text-align:center">'${{q}}' 검색 결과 없음</div>`;
     return;
   }}
   el.innerHTML=mins.map(m=>`
     <div class="li${{selMin===m.id?' active':''}}" onclick="selMinute(${{m.id}})">
       <div class="nm">${{m.title||'(제목 없음)'}}</div>
-      <div class="sub">${{m.date||''}} · ${{(m.attendees||'참석자 없음')}}</div>
+      <div class="sub">${{m.date||''}} · ${{m.attendees||'참석자 없음'}}</div>
     </div>`).join('');
+}}
+
+function setMinSearch(mode,btn) {{
+  minSearchMode=mode;
+  document.querySelectorAll('#min-mode-title,#min-mode-all').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMinutesList();
 }}
 
 function selMinute(id) {{
