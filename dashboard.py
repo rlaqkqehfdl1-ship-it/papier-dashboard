@@ -1059,8 +1059,8 @@ function renderSupList() {{
   const el=document.getElementById('sup-list');
   const q=(document.getElementById('sup-search')?.value||'').toLowerCase().trim();
   const sups=supData.suppliers||[];
-  const filtered=sups.map((s,i)=>({s,i})).filter(({s})=>!q||((s.name||'').toLowerCase().includes(q)));
-  el.innerHTML=filtered.length?filtered.map(({s,i})=>`
+  const filtered=sups.map((s,i)=>({{s,i}})).filter(({{s}})=>!q||((s.name||'').toLowerCase().includes(q)));
+  el.innerHTML=filtered.length?filtered.map(({{s,i}})=>`
     <div class="li${{selSup===i?' active':''}}" onclick="selSupplier(${{i}})">
       <div class="nm">${{s.name||'(이름 없음)'}}</div>
       <div class="sub">자재 ${{(s.materials||[]).length}}종 · ${{s.contact||''}}</div>
