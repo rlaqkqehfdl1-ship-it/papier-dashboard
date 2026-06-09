@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-25",
+  "updated_at": "2026-06-09",
   "suppliers": [
     {
       "name": "일오삼",
@@ -661,6 +661,35 @@
           "option": "검정",
           "purchase_source": "동대문종합시장",
           "note": ""
+        }
+      ]
+    },
+    {
+      "name": "앤주얼리",
+      "contact": "010-2068-4791",
+      "email": "",
+      "address": "",
+      "note": "",
+      "materials": [
+        {
+          "name": "자개 고양이 미니",
+          "spec": "",
+          "unit": "",
+          "unit_price": 300,
+          "moq": 1,
+          "option": "흰색",
+          "purchase_source": "앤주얼리",
+          "note": "26 S.S 행운시리즈"
+        },
+        {
+          "name": "미니 나비",
+          "spec": "",
+          "unit": "",
+          "unit_price": 400,
+          "moq": 1,
+          "option": "써지컬",
+          "purchase_source": "",
+          "note": "26 S.S 행운시리즈"
         }
       ]
     }
