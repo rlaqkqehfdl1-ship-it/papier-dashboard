@@ -75,11 +75,47 @@ print("데이터 수집 중...")
 orders_all   = get_all_orders(all_start, today, embed="items")
 orders_month = [o for o in orders_all if o["order_date"][:7] == datetime.now().strftime("%Y-%m")]
 orders_today = [o for o in orders_all if o["order_date"][:10] == today]
-products     = get("/products", limit=100).get("products", [])
+products     = get("/products", limit=100, embed="variants").get("products", [])
 
 real_products       = [p for p in products if float(p.get("price", "0")) > 0]
 product_names_json  = json.dumps([p["product_name"] for p in real_products], ensure_ascii=False)
 product_prices_json = json.dumps({p["product_name"]: int(float(p.get("price", "0"))) for p in real_products}, ensure_ascii=False)
+
+# ── stock.json 신제품 자동 추가 ───────────────────
+def gh_api_get(path):
+    url = f"https://api.github.com/repos/{GH_REPO}/contents/{path}"
+    r = requests.get(url, headers={"Authorization": f"token {GH_PAT}", "Accept": "application/vnd.github.v3+json"})
+    if r.status_code == 200:
+        d = r.json()
+        return json.loads(base64.b64decode(d["content"]).decode("utf-8")), d["sha"]
+    return None, None
+
+def gh_api_put(path, data, message, sha=None):
+    url = f"https://api.github.com/repos/{GH_REPO}/contents/{path}"
+    body = {"message": message, "content": base64.b64encode(json.dumps(data, ensure_ascii=False, indent=2).encode()).decode()}
+    if sha:
+        body["sha"] = sha
+    requests.put(url, headers={"Authorization": f"token {GH_PAT}", "Accept": "application/vnd.github.v3+json"}, json=body)
+
+if GH_PAT:
+    stock_data, stock_sha = gh_api_get("stock.json")
+    if stock_data is None:
+        stock_data = {"updated_at": "", "products": []}
+    existing_names = {p["product_name"] for p in stock_data.get("products", [])}
+    added = False
+    for p in real_products:
+        if p["product_name"] not in existing_names:
+            vs = []
+            for v in (p.get("variants") or []):
+                opt = (v.get("option_value") or "").strip() or "기본"
+                vs.append({"option": opt, "base_qty": 0})
+            if not vs:
+                vs = [{"option": "기본", "base_qty": 0}]
+            stock_data["products"].append({"product_name": p["product_name"], "variants": vs})
+            added = True
+    if added:
+        stock_data["updated_at"] = today
+        gh_api_put("stock.json", stock_data, f"신제품 자동 추가 {today}", stock_sha)
 
 # ── 집계 ─────────────────────────────────────
 total_month     = sum(float(o["actual_order_amount"]["order_price_amount"]) for o in orders_month)
@@ -427,9 +463,11 @@ canvas{{max-height:200px}}
         <div class="card"><h3>베스트셀러 (이번달)</h3><ol class="blist">{best_rows}</ol></div>
         <div class="card">
           <h3>재고 관리</h3>
-          <table class="qtbl"><thead><tr><th>상품명</th><th>옵션</th><th>기초재고</th><th>판매수량</th><th>잔여재고</th></tr></thead>
+          <div style="max-height:260px;overflow-y:auto;margin-bottom:8px">
+          <table class="qtbl"><thead><tr><th style="position:sticky;top:0;background:#fff;z-index:1">상품명</th><th style="position:sticky;top:0;background:#fff;z-index:1">옵션</th><th style="position:sticky;top:0;background:#fff;z-index:1">기초재고</th><th style="position:sticky;top:0;background:#fff;z-index:1">판매수량</th><th style="position:sticky;top:0;background:#fff;z-index:1">잔여재고</th></tr></thead>
             <tbody id="stock-tbody"><tr><td colspan="5" style="padding:16px;color:#ccc;text-align:center">불러오는 중...</td></tr></tbody>
           </table>
+          </div>
           <div class="btn-row">
             <button class="btn btn-p" id="save-btn" onclick="saveStock()">저장</button>
             <span class="save-st" id="stock-st"></span>
