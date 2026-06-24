@@ -874,7 +874,7 @@ function renderCostDetail(n) {{
   c.materials=bomParts.map(p=>({{'name':p['부품명']||'','qty':p['수량']||1,'unit':'개','unit_price':p['가격']||0}}));
   const tmpl=(costData._template||{{}}).items||[];
   let saved=c.items||[];
-  if(isNew&&tmpl.length) saved=tmpl.map(t=>({{{{'name':t.name||'','supplier':t.supplier||'','qty':t.qty||0,'unit_price':t.unit_price||0,'spec':t.spec||''}}}}));
+  if(isNew&&tmpl.length) saved=tmpl.map(t=>({{'name':t.name||'','supplier':t.supplier||'','qty':t.qty||0,'unit_price':t.unit_price||0,'spec':t.spec||''}}));
   while(saved.length<9) saved.push({{'name':'','supplier':'','qty':0,'unit_price':0,'spec':''}});
   const editRows=saved.slice(0,9).map((it,i)=>`
     <tr>
