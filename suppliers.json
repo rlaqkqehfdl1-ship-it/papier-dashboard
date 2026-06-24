@@ -917,25 +917,6 @@
       ]
     },
     {
-      "name": "비정형 거울",
-      "contact": "",
-      "email": "",
-      "address": "",
-      "note": "",
-      "materials": [
-        {
-          "name": "디고리",
-          "spec": "",
-          "unit": "개",
-          "unit_price": 0,
-          "moq": 1,
-          "option": "",
-          "purchase_source": "알리바바",
-          "note": ""
-        }
-      ]
-    },
-    {
       "name": "필통",
       "contact": "",
       "email": "",
