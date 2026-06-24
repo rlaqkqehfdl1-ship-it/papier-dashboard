@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-25",
+  "updated_at": "2026-06-24",
   "products": {
     "유실 [幽 室]": {
       "materials": [
@@ -738,6 +738,76 @@
       ],
       "shipping": 4000,
       "consumer_price": 37500
+    },
+    "행운 바다": {
+      "materials": [],
+      "items": [
+        {
+          "name": "디고리",
+          "supplier": "알리바바 거울 부품",
+          "qty": 1,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "납작 옥 비즈",
+          "supplier": "봄베이",
+          "qty": 2,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "파랑 미니 비즈",
+          "supplier": "보석상자",
+          "qty": 1,
+          "unit_price": 5,
+          "spec": "200ea"
+        },
+        {
+          "name": "미니 나비",
+          "supplier": "앤주얼리",
+          "qty": 1,
+          "unit_price": 400,
+          "spec": ""
+        },
+        {
+          "name": "미니 옥 고양이",
+          "supplier": "앤주얼리",
+          "qty": 1,
+          "unit_price": 300,
+          "spec": "중간 사이즈"
+        },
+        {
+          "name": "옥 스카이블루",
+          "supplier": "좋은날",
+          "qty": 1,
+          "unit_price": 75,
+          "spec": "약 79개(한줄), 4mm"
+        },
+        {
+          "name": "투명 수정",
+          "supplier": "좋은날",
+          "qty": 1,
+          "unit_price": 40,
+          "spec": "약 98개(한줄), 4mm"
+        },
+        {
+          "name": "비정형 자개",
+          "supplier": "디어문",
+          "qty": 1,
+          "unit_price": 800,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        }
+      ],
+      "shipping": 0,
+      "consumer_price": 0
     }
   }
 }
