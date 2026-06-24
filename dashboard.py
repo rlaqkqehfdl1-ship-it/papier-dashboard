@@ -306,7 +306,7 @@ canvas{{max-height:200px}}
 .list-panel{{background:#fff;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,.07);overflow:hidden;display:flex;flex-direction:column}}
 .panel-head{{padding:14px 18px;border-bottom:1px solid #f0f0f0;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}}
 .panel-head h3{{font-size:12px;font-weight:600;color:#555}}
-.list-scroll{{overflow-y:auto;flex:1}}
+.list-scroll{{overflow-y:auto;flex:1;max-height:calc(100vh - 220px)}}
 .li{{padding:12px 18px;border-bottom:1px solid #f8f8f8;cursor:pointer;transition:background .12s}}
 .li:hover{{background:#fafafa}}
 .li.active{{background:#f2f2f2;font-weight:600}}
