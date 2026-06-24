@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-05-25",
+  "updated_at": "2026-06-24",
   "products": [
     {
       "product_name": "유실 [幽 室]",
@@ -56,6 +56,24 @@
         {
           "option": "단품",
           "qty": 0
+        }
+      ]
+    },
+    {
+      "product_name": "행운 바다",
+      "variants": [
+        {
+          "option": "기본",
+          "base_qty": 0
+        }
+      ]
+    },
+    {
+      "product_name": "행운 클로버",
+      "variants": [
+        {
+          "option": "기본",
+          "base_qty": 0
         }
       ]
     }
