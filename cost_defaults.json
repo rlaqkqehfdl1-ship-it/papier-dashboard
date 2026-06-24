@@ -1,0 +1,68 @@
+{
+  "updated_at": "2026-06-24",
+  "items": [
+    {
+      "name": "지퍼백",
+      "supplier": "펠트친구",
+      "qty": 1,
+      "unit_price": 110,
+      "spec": "75x110"
+    },
+    {
+      "name": "노루지",
+      "supplier": "구디패키지",
+      "qty": 1,
+      "unit_price": 73,
+      "spec": "115x150(11호)"
+    },
+    {
+      "name": "브랜드카드",
+      "supplier": "애즈랜드",
+      "qty": 1,
+      "unit_price": 28,
+      "spec": "50x50"
+    },
+    {
+      "name": "엽서",
+      "supplier": "애즈랜드",
+      "qty": 1,
+      "unit_price": 105,
+      "spec": "89x126"
+    },
+    {
+      "name": "택배박스",
+      "supplier": "상자세상",
+      "qty": 1,
+      "unit_price": 115,
+      "spec": "150x120x120"
+    },
+    {
+      "name": "포장자재비",
+      "supplier": "쿠팡",
+      "qty": 2,
+      "unit_price": 38,
+      "spec": "검은색 습자지"
+    },
+    {
+      "name": "",
+      "supplier": "",
+      "qty": 0,
+      "unit_price": 0,
+      "spec": ""
+    },
+    {
+      "name": "",
+      "supplier": "",
+      "qty": 0,
+      "unit_price": 0,
+      "spec": ""
+    },
+    {
+      "name": "",
+      "supplier": "",
+      "qty": 0,
+      "unit_price": 0,
+      "spec": ""
+    }
+  ]
+}
