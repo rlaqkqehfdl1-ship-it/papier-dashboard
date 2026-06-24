@@ -868,10 +868,13 @@ function renderCostList() {{
 function selCostProd(idx) {{ const n=PRODS[idx]; selCost=n; renderCostList(); renderCostDetail(n); }}
 function renderCostDetail(n) {{
   const d=document.getElementById('costs-detail');
+  const isNew=!costData.products[n];
   const c=costData.products[n]||{{}};
   const bomParts=(bomData&&bomData.bom&&bomData.bom[n])||[];
   c.materials=bomParts.map(p=>({{'name':p['부품명']||'','qty':p['수량']||1,'unit':'개','unit_price':p['가격']||0}}));
-  const saved=c.items||[];
+  const tmpl=(costData._template||{{}}).items||[];
+  let saved=c.items||[];
+  if(isNew&&tmpl.length) saved=tmpl.map(t=>({{{{'name':t.name||'','supplier':t.supplier||'','qty':t.qty||0,'unit_price':t.unit_price||0,'spec':t.spec||''}}}}));
   while(saved.length<9) saved.push({{'name':'','supplier':'','qty':0,'unit_price':0,'spec':''}});
   const editRows=saved.slice(0,9).map((it,i)=>`
     <tr>
@@ -946,6 +949,8 @@ function renderCostDetail(n) {{
     <div class="csum" id="csum" style="margin-top:12px"></div>
     <div class="btn-row">
       <button class="btn btn-p" onclick="saveCosts()">저장</button>
+      <button class="btn btn-g" style="font-size:11px" onclick="saveAsTemplate()" title="현재 2~10번 항목을 신제품 기본값으로 저장">기본값으로 저장</button>
+      <button class="btn btn-g" style="font-size:11px" onclick="applyTemplate()" title="저장된 기본값을 현재 항목에 적용">기본값 불러오기</button>
       <span class="save-st" id="cost-st"></span>
     </div>`;
   c.materials.forEach(m=>addCMatRow(m));
@@ -1026,6 +1031,39 @@ async function saveCosts() {{
     st.textContent='저장 완료 '+costData.updated_at;
     renderCostList();
   }} catch(e) {{ st.textContent=''; alert('저장 실패: '+e.message); }}
+}}
+
+function collectCostItems() {{
+  const items=[];
+  document.querySelectorAll('#citems tr').forEach(tr=>{{
+    if(tr.id==='bom-ref-row') return;
+    const ins=tr.querySelectorAll('input'); if(ins.length<5) return;
+    items.push({{name:ins[0].value,supplier:ins[1].value,
+      qty:parseFloat(ins[2].value)||0,unit_price:parseFloat(ins[3].value)||0,spec:ins[4].value}});
+  }});
+  return items;
+}}
+async function saveAsTemplate() {{
+  const items=collectCostItems();
+  if(items.every(it=>!it.name)) {{ alert('저장할 항목이 없습니다. 2~10번 항목을 먼저 입력해주세요.'); return; }}
+  costData._template={{items}};
+  const st=document.getElementById('cost-st'); st.textContent='저장 중...';
+  try {{
+    await ghPut('costs.json',costData,'원가 기본값 템플릿 저장');
+    st.textContent='기본값 저장 완료';
+  }} catch(e) {{ st.textContent=''; alert('저장 실패: '+e.message); }}
+}}
+function applyTemplate() {{
+  const tmpl=(costData._template||{{}}).items||[];
+  if(!tmpl.length) {{ alert('저장된 기본값이 없습니다.\n먼저 기준 제품에서 항목을 입력하고 "기본값으로 저장"을 눌러주세요.'); return; }}
+  if(!confirm('현재 2~10번 항목을 기본값으로 덮어쓸까요?')) return;
+  const rows=[...document.querySelectorAll('#citems tr')].filter(tr=>tr.id!=='bom-ref-row');
+  rows.forEach((tr,i)=>{{
+    const t=tmpl[i]||{{}}, ins=tr.querySelectorAll('input'); if(ins.length<5) return;
+    ins[0].value=t.name||''; ins[1].value=t.supplier||'';
+    ins[2].value=t.qty||0; ins[3].value=t.unit_price||0; ins[4].value=t.spec||'';
+  }});
+  updCS();
 }}
 
 // ── BOM (부품 목록) ───────────────────────────
