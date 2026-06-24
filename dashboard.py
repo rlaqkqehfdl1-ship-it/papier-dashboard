@@ -946,6 +946,8 @@ function renderCostDetail(n) {{
     <div class="csum" id="csum" style="margin-top:12px"></div>
     <div class="btn-row">
       <button class="btn btn-p" onclick="saveCosts()">저장</button>
+      <button class="btn" onclick="saveCostDefaults()" style="background:#e8f0e8;color:#4a7a4a;border:1px solid #c0d8c0">기본값 저장</button>
+      <button class="btn" onclick="loadCostDefaults()" style="background:#f0f0f0;color:#555;border:1px solid #ddd">기본값 불러오기</button>
       <span class="save-st" id="cost-st"></span>
     </div>`;
   c.materials.forEach(m=>addCMatRow(m));
@@ -1026,6 +1028,40 @@ async function saveCosts() {{
     st.textContent='저장 완료 '+costData.updated_at;
     renderCostList();
   }} catch(e) {{ st.textContent=''; alert('저장 실패: '+e.message); }}
+}}
+async function saveCostDefaults() {{
+  const items=[];
+  document.querySelectorAll('#citems tr').forEach(tr=>{{
+    if(tr.id==='bom-ref-row') return;
+    const ins=tr.querySelectorAll('input'); if(ins.length<5) return;
+    items.push({{name:ins[0].value,supplier:ins[1].value,
+      qty:parseFloat(ins[2].value)||0,unit_price:parseFloat(ins[3].value)||0,spec:ins[4].value}});
+  }});
+  const st=document.getElementById('cost-st'); st.textContent='기본값 저장 중...';
+  try {{
+    await ghPut('cost_defaults.json',{{updated_at:new Date().toISOString().slice(0,10),items}},'원가 기본값 저장');
+    st.textContent='기본값 저장 완료';
+    setTimeout(()=>{{st.textContent='';}},2000);
+  }} catch(e) {{ st.textContent=''; alert('저장 실패: '+e.message); }}
+}}
+async function loadCostDefaults() {{
+  const st=document.getElementById('cost-st');
+  try {{
+    const {{data}}=await ghGet('cost_defaults.json');
+    if(!data||!data.items||!data.items.length) {{ alert('저장된 기본값이 없습니다.'); return; }}
+    const rows=document.querySelectorAll('#citems tr');
+    let ri=0;
+    rows.forEach(tr=>{{
+      if(tr.id==='bom-ref-row') return;
+      const ins=tr.querySelectorAll('input'); if(ins.length<5) return;
+      const it=data.items[ri++]||{{}};
+      ins[0].value=it.name||''; ins[1].value=it.supplier||'';
+      ins[2].value=it.qty||0; ins[3].value=it.unit_price||0; ins[4].value=it.spec||'';
+    }});
+    updCS();
+    st.textContent='기본값 불러옴';
+    setTimeout(()=>{{st.textContent='';}},2000);
+  }} catch(e) {{ alert('불러오기 실패: '+e.message); }}
 }}
 
 // ── BOM (부품 목록) ───────────────────────────
