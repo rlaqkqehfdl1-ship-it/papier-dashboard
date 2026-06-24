@@ -1055,7 +1055,7 @@ async function saveAsTemplate() {{
 }}
 function applyTemplate() {{
   const tmpl=(costData._template||{{}}).items||[];
-  if(!tmpl.length) {{ alert('저장된 기본값이 없습니다.\n먼저 기준 제품에서 항목을 입력하고 "기본값으로 저장"을 눌러주세요.'); return; }}
+  if(!tmpl.length) {{ alert('저장된 기본값이 없습니다.\\n먼저 기준 제품에서 항목을 입력하고 \\"기본값으로 저장\\"을 눌러주세요.'); return; }}
   if(!confirm('현재 2~10번 항목을 기본값으로 덮어쓸까요?')) return;
   const rows=[...document.querySelectorAll('#citems tr')].filter(tr=>tr.id!=='bom-ref-row');
   rows.forEach((tr,i)=>{{
