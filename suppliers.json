@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-09",
+  "updated_at": "2026-06-24",
   "suppliers": [
     {
       "name": "일오삼",
@@ -661,6 +661,26 @@
           "option": "검정",
           "purchase_source": "동대문종합시장",
           "note": ""
+        },
+        {
+          "name": "납작 옥 비즈",
+          "spec": "",
+          "unit": "개",
+          "unit_price": 200,
+          "moq": 1,
+          "option": "하얀색",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "투명 조개",
+          "spec": "",
+          "unit": "개",
+          "unit_price": 300,
+          "moq": 1,
+          "option": "AB조개 크리스탈",
+          "purchase_source": "동대문종합시장",
+          "note": ""
         }
       ]
     },
@@ -690,6 +710,285 @@
           "option": "써지컬",
           "purchase_source": "",
           "note": "26 S.S 행운시리즈"
+        },
+        {
+          "name": "미니 옥 고양이",
+          "spec": "",
+          "unit": "개",
+          "unit_price": 300,
+          "moq": 1,
+          "option": "중간 사이즈",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "비정형거울",
+      "contact": "",
+      "email": "",
+      "address": "",
+      "note": "",
+      "materials": [
+        {
+          "name": "디고리",
+          "spec": "",
+          "unit": "개",
+          "unit_price": 0,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "알리바바",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "보석상자",
+      "contact": "",
+      "email": "",
+      "address": "",
+      "note": "",
+      "materials": [
+        {
+          "name": "파랑 미니 비즈",
+          "spec": "",
+          "unit": "개",
+          "unit_price": 5,
+          "moq": 200,
+          "option": "한 봉지",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "투명 미니 비즈",
+          "spec": "",
+          "unit": "개",
+          "unit_price": 3.7,
+          "moq": 270,
+          "option": "한 봉지",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "좋은날",
+      "contact": "",
+      "email": "",
+      "address": "",
+      "note": "",
+      "materials": [
+        {
+          "name": "옥 스카이블루",
+          "spec": "4mm",
+          "unit": "개",
+          "unit_price": 75,
+          "moq": 79,
+          "option": "한 줄",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "투명 수정",
+          "spec": "4mm",
+          "unit": "개",
+          "unit_price": 40,
+          "moq": 98,
+          "option": "한 줄",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "백옥 4mm",
+          "spec": "4mm",
+          "unit": "개",
+          "unit_price": 45,
+          "moq": 87,
+          "option": "한 줄",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "투명 수정",
+          "spec": "6mm",
+          "unit": "개",
+          "unit_price": 88,
+          "moq": 68,
+          "option": "한 줄",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "디어문",
+      "contact": "",
+      "email": "",
+      "address": "",
+      "note": "",
+      "materials": [
+        {
+          "name": "비정형 자개",
+          "spec": "",
+          "unit": "개",
+          "unit_price": 800,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "유플러스",
+      "contact": "",
+      "email": "",
+      "address": "",
+      "note": "",
+      "materials": [
+        {
+          "name": "컷팅 큐빅 블루",
+          "spec": "4파이",
+          "unit": "개",
+          "unit_price": 300,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "컷팅 큐빅 투명",
+          "spec": "4파이",
+          "unit": "개",
+          "unit_price": 300,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "이본",
+      "contact": "",
+      "email": "",
+      "address": "",
+      "note": "",
+      "materials": [
+        {
+          "name": "인어 꼬리",
+          "spec": "",
+          "unit": "개",
+          "unit_price": 300,
+          "moq": 1,
+          "option": "색상 랜덤",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "블링블링",
+      "contact": "",
+      "email": "",
+      "address": "",
+      "note": "",
+      "materials": [
+        {
+          "name": "월광석",
+          "spec": "",
+          "unit": "개",
+          "unit_price": 300,
+          "moq": 1,
+          "option": "반투명 무광 월광석",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        },
+        {
+          "name": "백옥 10mm",
+          "spec": "10mm",
+          "unit": "개",
+          "unit_price": 300,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "비정형 거울",
+      "contact": "",
+      "email": "",
+      "address": "",
+      "note": "",
+      "materials": [
+        {
+          "name": "디고리",
+          "spec": "",
+          "unit": "개",
+          "unit_price": 0,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "알리바바",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "필통",
+      "contact": "",
+      "email": "",
+      "address": "",
+      "note": "",
+      "materials": [
+        {
+          "name": "컷팅 클로버",
+          "spec": "",
+          "unit": "개",
+          "unit_price": 300,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "피터팬",
+      "contact": "",
+      "email": "",
+      "address": "",
+      "note": "",
+      "materials": [
+        {
+          "name": "분홍 모조 비즈",
+          "spec": "10mm",
+          "unit": "개",
+          "unit_price": 29,
+          "moq": 68,
+          "option": "한 박스",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "안공사",
+      "contact": "",
+      "email": "",
+      "address": "",
+      "note": "",
+      "materials": [
+        {
+          "name": "펄 클로버",
+          "spec": "",
+          "unit": "개",
+          "unit_price": 300,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
         }
       ]
     }

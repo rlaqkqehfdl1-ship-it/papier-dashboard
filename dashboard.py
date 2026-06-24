@@ -608,6 +608,23 @@ canvas{{max-height:200px}}
   </div>
 </div>
 
+<!-- 거래업체 신규등록 확인 모달 -->
+<div id="sup-reg-modal" class="modal-bg">
+  <div class="modal-box" style="width:500px;max-height:80vh">
+    <div class="modal-head">
+      <h4>거래업체 등록 안내</h4>
+      <button class="modal-close" onclick="closeSupRegModal('cancel')">×</button>
+    </div>
+    <div style="padding:20px 24px">
+      <div id="sup-reg-msg" style="font-size:13px;line-height:1.9;color:#333;max-height:40vh;overflow-y:auto"></div>
+      <div style="margin-top:20px;display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-g" style="font-size:12px" onclick="closeSupRegModal('bom-only')">취소 (BOM만 저장)</button>
+        <button class="btn btn-p" style="font-size:12px" onclick="closeSupRegModal('register')">확인 (함께 등록)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Auth ─────────────────────────────────────
 const UH = '{user_hash}', PH = '{pass_hash}';
@@ -1133,15 +1150,86 @@ function renderBomFilterView() {{
   if(!found) html+='<div class="detail-empty">해당 거래처의 부품이 없습니다</div>';
   d.innerHTML=html;
 }}
-async function saveBom() {{
-  if(!curBomProd) return;
-  const rows=[], tb=document.getElementById('bom-tbody'); if(!tb) return;
+function collectBomRows() {{
+  const rows=[], tb=document.getElementById('bom-tbody'); if(!tb) return rows;
   tb.querySelectorAll('tr').forEach(tr=>{{
     const ins=tr.querySelectorAll('input'); if(ins.length<8) return;
     rows.push({{'부품명':ins[0].value,'구매처':ins[1].value,'거래처':ins[2].value,
       '가격':parseFloat(ins[3].value)||0,'수량':parseFloat(ins[4].value)||0,
       'moq':parseFloat(ins[5].value)||0,'옵션':ins[6].value,'크기':ins[7].value}});
   }});
+  return rows;
+}}
+function checkSupMissing(rows) {{
+  const sups=(supData&&supData.suppliers)||[];
+  const missing=[];
+  rows.forEach(p=>{{
+    const supName=(p['거래처']||'').trim();
+    if(!supName) return;
+    const matName=(p['부품명']||'').trim();
+    const sup=sups.find(s=>s.name===supName);
+    if(!sup) {{
+      let entry=missing.find(m=>m.type==='new_sup'&&m.supName===supName);
+      if(!entry) {{ entry={{type:'new_sup',supName,parts:[]}}; missing.push(entry); }}
+      if(matName) entry.parts.push(p);
+    }} else if(matName) {{
+      const matExists=(sup.materials||[]).some(m=>m.name===matName);
+      if(!matExists) missing.push({{type:'new_mat',supName,supIdx:sups.indexOf(sup),part:p}});
+    }}
+  }});
+  return missing;
+}}
+let _pendingBomRows=null, _pendingMissing=null;
+async function saveBom() {{
+  if(!curBomProd) return;
+  const rows=collectBomRows();
+  const missing=checkSupMissing(rows);
+  if(missing.length>0) {{
+    _pendingBomRows=rows; _pendingMissing=missing;
+    let html='<p style="margin-bottom:12px;font-weight:600;color:#c55">아래 항목이 거래업체에 등록되어 있지 않습니다:</p><ul style="margin:0 0 16px 0;padding-left:20px">';
+    missing.forEach(m=>{{
+      if(m.type==='new_sup') {{
+        html+=`<li style="margin:5px 0">업체 없음: <strong>${{m.supName}}</strong>`;
+        if(m.parts.length) html+=` (자재: ${{m.parts.map(p=>p['부품명']).join(', ')}})`;
+        html+='</li>';
+      }} else {{
+        html+=`<li style="margin:5px 0">자재 없음: <strong>${{m.supName}}</strong> &rsaquo; ${{m.part['부품명']}}</li>`;
+      }}
+    }});
+    html+='</ul><p style="font-size:12px;color:#888">신규 등록하시겠습니까?<br>취소 선택 시 BOM만 저장됩니다.</p>';
+    document.getElementById('sup-reg-msg').innerHTML=html;
+    document.getElementById('sup-reg-modal').classList.add('open');
+    return;
+  }}
+  await _doSaveBom(rows);
+}}
+function closeSupRegModal(action) {{
+  document.getElementById('sup-reg-modal').classList.remove('open');
+  if(action==='register') {{ _doRegisterAndSave(_pendingBomRows,_pendingMissing); }}
+  else if(action==='bom-only') {{ _doSaveBom(_pendingBomRows); }}
+  _pendingBomRows=null; _pendingMissing=null;
+}}
+async function _doRegisterAndSave(rows,missing) {{
+  const sups=supData.suppliers;
+  missing.forEach(m=>{{
+    if(m.type==='new_sup') {{
+      const mats=m.parts.map(p=>({{name:p['부품명'],spec:p['크기'],unit:'개',
+        unit_price:p['가격'],moq:p['moq']||1,option:p['옵션'],purchase_source:p['구매처'],note:''}}));
+      sups.push({{name:m.supName,contact:'',email:'',address:'',note:'',materials:mats}});
+    }} else {{
+      sups[m.supIdx].materials.push({{name:m.part['부품명'],spec:m.part['크기'],unit:'개',
+        unit_price:m.part['가격'],moq:m.part['moq']||1,option:m.part['옵션'],
+        purchase_source:m.part['구매처'],note:''}});
+    }}
+  }});
+  supData.updated_at=new Date().toISOString().slice(0,10);
+  const bst=document.getElementById('bom-st'); bst.textContent='저장 중...';
+  try {{
+    await ghPut('suppliers.json',supData,'거래업체 자동등록 (BOM 연동)');
+    await _doSaveBom(rows);
+  }} catch(e) {{ bst.textContent=''; alert('저장 실패: '+e.message); }}
+}}
+async function _doSaveBom(rows) {{
   bomData.bom[curBomProd]=rows;
   bomData.updated_at=new Date().toISOString().slice(0,10);
   const bst=document.getElementById('bom-st'); bst.textContent='저장 중...';
