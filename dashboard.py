@@ -663,6 +663,32 @@ canvas{{max-height:200px}}
   </div>
 </div>
 
+<!-- 원가 기본값 모달 -->
+<div id="cost-default-modal" class="modal-bg" onclick="if(event.target===this)closeDefaultModal()">
+  <div class="modal-box" style="width:620px;max-height:80vh">
+    <div class="modal-head">
+      <h4>기본값 불러오기</h4>
+      <button class="modal-close" onclick="closeDefaultModal()">×</button>
+    </div>
+    <div style="padding:16px 20px;overflow-y:auto;flex:1">
+      <p style="font-size:12px;color:#888;margin-bottom:12px">내용을 수정한 후 입력하면 현재 상품에 적용됩니다.</p>
+      <table class="dtbl" style="width:100%">
+        <thead><tr>
+          <th style="width:22px"></th>
+          <th>항목명</th><th style="min-width:80px">업체명</th>
+          <th style="width:60px">수량</th><th style="width:80px">단가(원)</th>
+          <th style="min-width:70px">사양</th>
+        </tr></thead>
+        <tbody id="default-items-tbody"></tbody>
+      </table>
+    </div>
+    <div style="padding:12px 20px;border-top:1px solid #eee;display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn btn-g" onclick="closeDefaultModal()">취소</button>
+      <button class="btn btn-p" onclick="applyDefaultItems()">입력</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Auth ─────────────────────────────────────
 const UH = '{user_hash}', PH = '{pass_hash}';
@@ -1045,23 +1071,45 @@ async function saveCostDefaults() {{
   }} catch(e) {{ st.textContent=''; alert('저장 실패: '+e.message); }}
 }}
 async function loadCostDefaults() {{
-  const st=document.getElementById('cost-st');
   try {{
     const {{data}}=await ghGet('cost_defaults.json');
     if(!data||!data.items||!data.items.length) {{ alert('저장된 기본값이 없습니다.'); return; }}
-    const rows=document.querySelectorAll('#citems tr');
-    let ri=0;
-    rows.forEach(tr=>{{
-      if(tr.id==='bom-ref-row') return;
-      const ins=tr.querySelectorAll('input'); if(ins.length<5) return;
-      const it=data.items[ri++]||{{}};
-      ins[0].value=it.name||''; ins[1].value=it.supplier||'';
-      ins[2].value=it.qty||0; ins[3].value=it.unit_price||0; ins[4].value=it.spec||'';
-    }});
-    updCS();
-    st.textContent='기본값 불러옴';
-    setTimeout(()=>{{st.textContent='';}},2000);
+    const tb=document.getElementById('default-items-tbody');
+    tb.innerHTML=data.items.map((it,i)=>`
+      <tr>
+        <td style="text-align:center;color:#ccc;font-size:10px;padding:2px 4px">${{i+2}}</td>
+        <td><input type="text" value="${{(it.name||'').replace(/"/g,'&quot;')}}" placeholder="항목명" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;font-family:inherit"></td>
+        <td><input type="text" value="${{(it.supplier||'').replace(/"/g,'&quot;')}}" placeholder="업체명" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;font-family:inherit"></td>
+        <td><input type="number" value="${{it.qty||0}}" min="0" step="1" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px"></td>
+        <td><input type="number" value="${{it.unit_price||0}}" min="0" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px"></td>
+        <td><input type="text" value="${{(it.spec||'').replace(/"/g,'&quot;')}}" placeholder="사양" style="width:100%;border:1px solid #ddd;border-radius:4px;padding:4px 6px;font-size:12px;font-family:inherit"></td>
+      </tr>`).join('');
+    document.getElementById('cost-default-modal').classList.add('open');
   }} catch(e) {{ alert('불러오기 실패: '+e.message); }}
+}}
+function applyDefaultItems() {{
+  const trs=document.querySelectorAll('#default-items-tbody tr');
+  const targetRows=[];
+  document.querySelectorAll('#citems tr').forEach(tr=>{{
+    if(tr.id==='bom-ref-row') return;
+    targetRows.push(tr);
+  }});
+  trs.forEach((tr,i)=>{{
+    if(i>=targetRows.length) return;
+    const sins=tr.querySelectorAll('input');
+    const dins=targetRows[i].querySelectorAll('input');
+    if(sins.length<5||dins.length<5) return;
+    dins[0].value=sins[0].value; dins[1].value=sins[1].value;
+    dins[2].value=sins[2].value; dins[3].value=sins[3].value; dins[4].value=sins[4].value;
+  }});
+  updCS();
+  closeDefaultModal();
+  const st=document.getElementById('cost-st');
+  st.textContent='기본값 적용됨';
+  setTimeout(()=>{{st.textContent='';}},2000);
+}}
+function closeDefaultModal() {{
+  document.getElementById('cost-default-modal').classList.remove('open');
 }}
 
 // ── BOM (부품 목록) ───────────────────────────
