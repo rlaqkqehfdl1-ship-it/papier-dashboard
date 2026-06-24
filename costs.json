@@ -740,62 +740,141 @@
       "consumer_price": 37500
     },
     "행운 바다": {
-      "materials": [],
-      "items": [
+      "materials": [
         {
           "name": "디고리",
-          "supplier": "알리바바 거울 부품",
           "qty": 1,
-          "unit_price": 0,
-          "spec": ""
+          "unit": "개",
+          "unit_price": 0
         },
         {
           "name": "납작 옥 비즈",
-          "supplier": "봄베이",
           "qty": 2,
+          "unit": "개",
+          "unit_price": 0
+        },
+        {
+          "name": "파랑 미니 비즈",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 5
+        },
+        {
+          "name": "미니 나비",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 400
+        },
+        {
+          "name": "미니 옥 고양이",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 300
+        },
+        {
+          "name": "옥 스카이블루",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 75
+        },
+        {
+          "name": "투명 수정",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 40
+        },
+        {
+          "name": "비정형 자개",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 800
+        },
+        {
+          "name": "투명 조개",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 300
+        },
+        {
+          "name": "컷팅 큐빅 블루",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 300
+        },
+        {
+          "name": "컷팅 큐빅 투명",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 300
+        },
+        {
+          "name": "인어 꼬리",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 300
+        },
+        {
+          "name": "월광석",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 300
+        }
+      ],
+      "items": [
+        {
+          "name": "지퍼백",
+          "supplier": "펠트친구",
+          "qty": 1,
+          "unit_price": 110,
+          "spec": "75x110"
+        },
+        {
+          "name": "노루지",
+          "supplier": "구디패키지",
+          "qty": 1,
+          "unit_price": 73,
+          "spec": "115x150(11호)"
+        },
+        {
+          "name": "브랜드카드",
+          "supplier": "애즈랜드",
+          "qty": 1,
+          "unit_price": 28,
+          "spec": "50x50"
+        },
+        {
+          "name": "엽서",
+          "supplier": "애즈랜드",
+          "qty": 1,
+          "unit_price": 105,
+          "spec": "89x126"
+        },
+        {
+          "name": "택배박스",
+          "supplier": "상자세상",
+          "qty": 1,
+          "unit_price": 115,
+          "spec": "150x120x120"
+        },
+        {
+          "name": "포장자재비",
+          "supplier": "쿠팡",
+          "qty": 2,
+          "unit_price": 38,
+          "spec": "검은색 습자지"
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
           "unit_price": 0,
           "spec": ""
         },
         {
-          "name": "파랑 미니 비즈",
-          "supplier": "보석상자",
-          "qty": 1,
-          "unit_price": 5,
-          "spec": "200ea"
-        },
-        {
-          "name": "미니 나비",
-          "supplier": "앤주얼리",
-          "qty": 1,
-          "unit_price": 400,
-          "spec": ""
-        },
-        {
-          "name": "미니 옥 고양이",
-          "supplier": "앤주얼리",
-          "qty": 1,
-          "unit_price": 300,
-          "spec": "중간 사이즈"
-        },
-        {
-          "name": "옥 스카이블루",
-          "supplier": "좋은날",
-          "qty": 1,
-          "unit_price": 75,
-          "spec": "약 79개(한줄), 4mm"
-        },
-        {
-          "name": "투명 수정",
-          "supplier": "좋은날",
-          "qty": 1,
-          "unit_price": 40,
-          "spec": "약 98개(한줄), 4mm"
-        },
-        {
-          "name": "비정형 자개",
-          "supplier": "디어문",
-          "qty": 1,
-          "unit_price": 800,
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
           "spec": ""
         },
         {
@@ -807,7 +886,7 @@
         }
       ],
       "shipping": 0,
-      "consumer_price": 0
+      "consumer_price": 9000
     }
   }
 }
