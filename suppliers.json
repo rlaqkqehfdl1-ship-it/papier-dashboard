@@ -972,6 +972,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "멋쟁이",
+      "contact": "",
+      "email": "",
+      "address": "",
+      "note": "",
+      "materials": [
+        {
+          "name": "멋쟁이",
+          "spec": "",
+          "unit": "개",
+          "unit_price": 0,
+          "moq": 50,
+          "option": "",
+          "purchase_source": "멋쟁이",
+          "note": ""
+        }
+      ]
     }
   ]
 }
