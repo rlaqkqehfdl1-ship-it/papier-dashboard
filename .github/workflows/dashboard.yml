@@ -1,6 +1,13 @@
 name: Daily Dashboard
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - dashboard.py
+      - run_dashboard.py
+      - .github/workflows/dashboard.yml
   schedule:
     - cron: '0 1 * * *'  # 매일 KST 10:00 (UTC 01:00)
   workflow_dispatch:       # 수동 실행 버튼도 제공
