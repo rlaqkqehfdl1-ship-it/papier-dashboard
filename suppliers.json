@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-06-24",
+  "updated_at": "2026-09-15",
   "suppliers": [
     {
       "name": "일오삼",
@@ -969,6 +969,25 @@
           "moq": 1,
           "option": "",
           "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "비즈369",
+      "contact": "",
+      "email": "",
+      "address": "동대문종합시장",
+      "note": "",
+      "materials": [
+        {
+          "name": "크리스탈비즈",
+          "spec": "10mm",
+          "unit": "1줄",
+          "unit_price": 4000,
+          "moq": 54,
+          "option": "",
+          "purchase_source": "",
           "note": ""
         }
       ]
