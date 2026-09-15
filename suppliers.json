@@ -991,6 +991,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "비즈클럽",
+      "contact": "",
+      "email": "",
+      "address": "동대문종합시장",
+      "note": "",
+      "materials": [
+        {
+          "name": "터키석",
+          "spec": "",
+          "unit": "1줄",
+          "unit_price": 4000,
+          "moq": 64,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
     }
   ]
 }
