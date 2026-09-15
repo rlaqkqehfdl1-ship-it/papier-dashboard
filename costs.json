@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-08-18",
+  "updated_at": "2026-09-15",
   "products": {
     "유실 [幽 室]": {
       "materials": [
@@ -1173,6 +1173,155 @@
       ],
       "shipping": 3500,
       "consumer_price": 16000
+    },
+    "[Lucky cat club] 행운 바다": {
+      "materials": [
+        {
+          "name": "옥 스카이블루",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 75
+        },
+        {
+          "name": "디고리",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 0
+        },
+        {
+          "name": "납작 옥 비즈",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 200
+        },
+        {
+          "name": "납작 옥 비즈",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 200
+        },
+        {
+          "name": "미니 나비",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 400
+        },
+        {
+          "name": "미니 옥 고양이",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 300
+        },
+        {
+          "name": "투명 미니 비즈",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 3.7
+        },
+        {
+          "name": "비정형 자개",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 800
+        },
+        {
+          "name": "투명 조개",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 300
+        },
+        {
+          "name": "컷팅 큐빅 블루",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 300
+        },
+        {
+          "name": "컷팅 큐빅 투명",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 300
+        },
+        {
+          "name": "월광석",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 300
+        },
+        {
+          "name": "인어 꼬리",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 300
+        }
+      ],
+      "items": [
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        }
+      ],
+      "shipping": 3500,
+      "consumer_price": 12000
     }
   },
   "_template": {
