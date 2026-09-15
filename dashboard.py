@@ -223,7 +223,12 @@ body{{font-family:'Apple SD Gothic Neo',sans-serif;background:#f5f5f5;color:#222
 .sidebar .logout button{{width:100%;background:transparent;color:#555;border:1px solid #2a2a2a;border-radius:6px;padding:7px;font-size:11px;cursor:pointer;font-family:inherit}}
 .sidebar .logout button:hover{{color:#fff;border-color:#555}}
 .main{{flex:1;margin-left:176px;background:#f5f5f5;min-height:100vh}}
-.topbar{{background:#fff;border-bottom:1px solid #eee;padding:12px 28px;font-size:11px;color:#aaa}}
+.topbar{{background:#fff;border-bottom:1px solid #eee;padding:9px 28px;font-size:11px;color:#aaa;display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:43px}}
+.refresh-wrap{{display:flex;align-items:center;gap:10px}}
+.refresh-status{{font-size:11px;color:#999;white-space:nowrap}}
+.refresh-btn{{border:1px solid #222;background:#111;color:#fff;border-radius:7px;padding:7px 12px;font-size:11px;font-family:inherit;cursor:pointer;white-space:nowrap;transition:all .15s}}
+.refresh-btn:hover{{background:#333}}
+.refresh-btn:disabled{{background:#aaa;border-color:#aaa;cursor:wait}}
 .page{{display:none;padding:24px 28px}}
 .page.active{{display:block}}
 /* KPI */
@@ -430,7 +435,13 @@ canvas{{max-height:200px}}
   </div>
 
   <div class="main">
-    <div class="topbar">{now_str}</div>
+    <div class="topbar">
+      <span>{now_str}</span>
+      <div class="refresh-wrap">
+        <span class="refresh-status" id="refresh-status"></span>
+        <button class="refresh-btn" id="refresh-btn" onclick="refreshDashboard()">↻ 지금 갱신</button>
+      </div>
+    </div>
 
     <!-- 대시보드 -->
     <div class="page active" id="page-main">
@@ -736,6 +747,71 @@ function getToken() {{
   let t=localStorage.getItem('gh_token');
   if(!t) {{ t=prompt('GitHub Personal Access Token'); if(t) localStorage.setItem('gh_token',t.trim()); }}
   return t||'';
+}}
+async function refreshDashboard() {{
+  const btn=document.getElementById('refresh-btn');
+  const st=document.getElementById('refresh-status');
+  const tok=getToken();
+  if(!tok) {{ st.textContent='GitHub 토큰이 필요합니다.'; return; }}
+
+  btn.disabled=true;
+  btn.textContent='갱신 요청 중…';
+  st.textContent='카페24 데이터를 불러올 준비 중입니다.';
+  const requestedAt=Date.now();
+
+  try {{
+    const r=await fetch(
+      `https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/actions/workflows/dashboard.yml/dispatches`,
+      {{
+        method:'POST',
+        headers:{{
+          'Authorization':`Bearer ${{tok}}`,
+          'Accept':'application/vnd.github+json',
+          'Content-Type':'application/json'
+        }},
+        body:JSON.stringify({{ref:'main'}})
+      }}
+    );
+    if(r.status!==204) {{
+      let msg='갱신 요청에 실패했습니다.';
+      try {{ msg=(await r.json()).message||msg; }} catch(_) {{}}
+      throw new Error(msg);
+    }}
+    btn.textContent='갱신 중…';
+    st.textContent='갱신을 시작했습니다. 완료까지 약 1~3분 걸립니다.';
+    await waitForRefresh(tok,requestedAt);
+  }} catch(e) {{
+    btn.disabled=false;
+    btn.textContent='↻ 지금 갱신';
+    st.textContent='오류: '+e.message;
+  }}
+}}
+
+async function waitForRefresh(tok,requestedAt) {{
+  const btn=document.getElementById('refresh-btn');
+  const st=document.getElementById('refresh-status');
+  for(let i=0;i<60;i++) {{
+    await new Promise(resolve=>setTimeout(resolve,5000));
+    const r=await fetch(
+      `https://api.github.com/repos/${{GH_OWNER}}/${{GH_REPO_}}/actions/workflows/dashboard.yml/runs?event=workflow_dispatch&per_page=5&_=${{Date.now()}}`,
+      {{cache:'no-store',headers:{{'Authorization':`Bearer ${{tok}}`,'Accept':'application/vnd.github+json'}}}}
+    );
+    if(!r.ok) continue;
+    const runs=(await r.json()).workflow_runs||[];
+    const run=runs.find(x=>new Date(x.created_at).getTime()>=requestedAt-10000);
+    if(!run) continue;
+    if(run.status!=='completed') {{ st.textContent='카페24 데이터 갱신 및 배포 중입니다…'; continue; }}
+    if(run.conclusion==='success') {{
+      btn.textContent='갱신 완료';
+      st.textContent='최신 데이터를 적용합니다…';
+      setTimeout(()=>location.reload(),5000);
+      return;
+    }}
+    throw new Error('자동 갱신 작업이 실패했습니다. GitHub Actions를 확인해 주세요.');
+  }}
+  btn.disabled=false;
+  btn.textContent='↻ 지금 갱신';
+  st.textContent='갱신은 계속 진행 중입니다. 잠시 후 페이지를 새로고침해 주세요.';
 }}
 async function ghGet(f) {{
   const tok=getToken();
