@@ -1,0 +1,21 @@
+{
+  "updated_at": "2026-09-23",
+  "campaigns": [
+    {
+      "id": 1790135153029,
+      "title": "에이블리 메가 세일",
+      "type": "할인행사",
+      "status": "진행중",
+      "start_date": "2026-09-21",
+      "end_date": "2026-10-06",
+      "channels": [
+        "기타"
+      ],
+      "discount": "에이블리 할인",
+      "target_sales": 0,
+      "actual_sales": 0,
+      "memo": "대표상품 클로버로 진행\nsns 마케팅 (X+IG) 병행",
+      "result": ""
+    }
+  ]
+}
