@@ -1077,6 +1077,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "은센",
+      "contact": "",
+      "email": "",
+      "address": "쿠팡",
+      "note": "",
+      "materials": [
+        {
+          "name": "핸드폰 팬던트",
+          "spec": "",
+          "unit": "1ea",
+          "unit_price": 400,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "쿠팡",
+          "note": ""
+        }
+      ]
     }
   ]
 }
