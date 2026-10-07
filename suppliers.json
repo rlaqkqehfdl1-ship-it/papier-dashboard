@@ -1053,9 +1053,20 @@
       "name": "Yiwu Victory Technology Co., Ltd.",
       "contact": "",
       "email": "",
-      "address": "",
+      "address": "알리바바",
       "note": "",
-      "materials": []
+      "materials": [
+        {
+          "name": "불가사리 팬던트",
+          "spec": "",
+          "unit": "1ea",
+          "unit_price": 555,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "알리바바",
+          "note": ""
+        }
+      ]
     }
   ]
 }
