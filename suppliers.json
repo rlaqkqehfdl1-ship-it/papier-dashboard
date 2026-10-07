@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-15",
+  "updated_at": "2026-10-07",
   "suppliers": [
     {
       "name": "일오삼",
@@ -1006,6 +1006,25 @@
           "unit_price": 4000,
           "moq": 64,
           "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
+    },
+    {
+      "name": "369비즈(Biz)",
+      "contact": "01054885070",
+      "email": "",
+      "address": "동대문종합시장 B동 5114호",
+      "note": "",
+      "materials": [
+        {
+          "name": "투명 글라스 비즈",
+          "spec": "10mm",
+          "unit": "1줄",
+          "unit_price": 4000,
+          "moq": 1,
+          "option": "54ea",
           "purchase_source": "동대문종합시장",
           "note": ""
         }
