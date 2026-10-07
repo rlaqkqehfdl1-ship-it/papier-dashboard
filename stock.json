@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-15",
+  "updated_at": "2026-10-07",
   "products": [
     {
       "product_name": "유실 [幽 室]",
@@ -97,6 +97,15 @@
     },
     {
       "product_name": "[Celestial Collection] Aqua Stardust",
+      "variants": [
+        {
+          "option": "기본",
+          "base_qty": 0
+        }
+      ]
+    },
+    {
+      "product_name": "[Celestial Collection] Pink Star Candy Bagcharm",
       "variants": [
         {
           "option": "기본",
