@@ -394,6 +394,16 @@
           "option": "",
           "purchase_source": "동대문종합시장",
           "note": ""
+        },
+        {
+          "name": "오벌 카라비너",
+          "spec": "",
+          "unit": "",
+          "unit_price": 1000,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
         }
       ]
     },
