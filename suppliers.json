@@ -1096,6 +1096,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "모노지오",
+      "contact": "",
+      "email": "",
+      "address": "쿠팡",
+      "note": "",
+      "materials": [
+        {
+          "name": "삼각고리(특대)",
+          "spec": "13x7",
+          "unit": "",
+          "unit_price": 250,
+          "moq": 1,
+          "option": "XL",
+          "purchase_source": "쿠팡",
+          "note": ""
+        }
+      ]
     }
   ]
 }
