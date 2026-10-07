@@ -249,7 +249,7 @@
         },
         {
           "name": "하트 O링",
-          "qty": 1,
+          "qty": 3,
           "unit": "개",
           "unit_price": 72
         },
@@ -450,7 +450,7 @@
           "spec": ""
         }
       ],
-      "shipping": 4000,
+      "shipping": 3500,
       "consumer_price": 27000
     },
     "잔화 [殘 花]": {
@@ -593,7 +593,7 @@
           "spec": ""
         }
       ],
-      "shipping": 4000,
+      "shipping": 3500,
       "consumer_price": 31100
     },
     "중첩 [重 疊]": {
@@ -736,7 +736,7 @@
           "spec": ""
         }
       ],
-      "shipping": 4000,
+      "shipping": 3500,
       "consumer_price": 37500
     },
     "행운 바다": {
