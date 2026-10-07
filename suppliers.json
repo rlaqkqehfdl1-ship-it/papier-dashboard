@@ -404,6 +404,16 @@
           "option": "",
           "purchase_source": "동대문종합시장",
           "note": ""
+        },
+        {
+          "name": "대형 O링",
+          "spec": "",
+          "unit": "",
+          "unit_price": 1000,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
         }
       ]
     },
