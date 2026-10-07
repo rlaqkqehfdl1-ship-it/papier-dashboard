@@ -1065,13 +1065,7 @@
         },
         {
           "name": "투명 미니 비즈",
-          "qty": 1,
-          "unit": "개",
-          "unit_price": 3.7
-        },
-        {
-          "name": "투명 미니 비즈",
-          "qty": 1,
+          "qty": 2,
           "unit": "개",
           "unit_price": 3.7
         },
@@ -1104,6 +1098,18 @@
           "qty": 1,
           "unit": "개",
           "unit_price": 88
+        },
+        {
+          "name": "리본/나비 O링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 11
+        },
+        {
+          "name": "나비하트 O링",
+          "qty": 3,
+          "unit": "개",
+          "unit_price": 8
         }
       ],
       "items": [
@@ -1253,6 +1259,18 @@
           "qty": 1,
           "unit": "개",
           "unit_price": 300
+        },
+        {
+          "name": "리본/나비 O링",
+          "qty": 2,
+          "unit": "개",
+          "unit_price": 11
+        },
+        {
+          "name": "나비하트 O링",
+          "qty": 2,
+          "unit": "개",
+          "unit_price": 8
         }
       ],
       "items": [
@@ -1342,6 +1360,18 @@
           "qty": 1,
           "unit": "개",
           "unit_price": 1000
+        },
+        {
+          "name": "리본/나비 O링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 11
+        },
+        {
+          "name": "누름볼",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 35
         }
       ],
       "items": [
@@ -1411,6 +1441,131 @@
       ],
       "shipping": 3500,
       "consumer_price": 16300
+    },
+    "[Celestial Collection] Pink Star Candy Bagcharm": {
+      "materials": [
+        {
+          "name": "레진",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 224
+        },
+        {
+          "name": "개고리",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 800
+        },
+        {
+          "name": "핸드폰 팬던트",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 400
+        },
+        {
+          "name": "대형 O링",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 1000
+        },
+        {
+          "name": "투명 글라스 비즈",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 4000
+        },
+        {
+          "name": "삼각고리(특대)",
+          "qty": 1,
+          "unit": "개",
+          "unit_price": 250
+        },
+        {
+          "name": "하트 O링",
+          "qty": 2,
+          "unit": "개",
+          "unit_price": 72
+        },
+        {
+          "name": "리본/나비 O링",
+          "qty": 2,
+          "unit": "개",
+          "unit_price": 11
+        },
+        {
+          "name": "누름볼",
+          "qty": 2,
+          "unit": "개",
+          "unit_price": 35
+        }
+      ],
+      "items": [
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        },
+        {
+          "name": "",
+          "supplier": "",
+          "qty": 0,
+          "unit_price": 0,
+          "spec": ""
+        }
+      ],
+      "shipping": 3500,
+      "consumer_price": 0
     }
   },
   "_template": {
