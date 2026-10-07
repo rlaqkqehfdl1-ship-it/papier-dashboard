@@ -1029,6 +1029,25 @@
           "note": ""
         }
       ]
+    },
+    {
+      "name": "비즈클럽",
+      "contact": "010423601089",
+      "email": "",
+      "address": "동대문종합시장 B동 5131호",
+      "note": "",
+      "materials": [
+        {
+          "name": "터키석",
+          "spec": "6mm",
+          "unit": "30ea",
+          "unit_price": 1875,
+          "moq": 1,
+          "option": "",
+          "purchase_source": "동대문종합시장",
+          "note": ""
+        }
+      ]
     }
   ]
 }
