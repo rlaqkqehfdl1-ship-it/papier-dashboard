@@ -1409,8 +1409,8 @@
           "spec": ""
         }
       ],
-      "shipping": 3000,
-      "consumer_price": 0
+      "shipping": 3500,
+      "consumer_price": 16300
     }
   },
   "_template": {
